@@ -227,9 +227,12 @@ async function toggleContacted(i) {
   if (!lead || saving[lead.name]) return;
 
   saving[lead.name] = true;
+  
+  // Capture current state BEFORE flipping
+  var currentlyContacted = !!contactedSet[lead.name];
 
-  // optimistic UI update first — tick immediately, don't wait for DB
-  if (contactedSet[lead.name]) {
+  // Optimistic UI update first
+  if (currentlyContacted) {
     delete contactedSet[lead.name];
   } else {
     contactedSet[lead.name] = {
@@ -242,11 +245,9 @@ async function toggleContacted(i) {
   updateContactedCount();
   renderLeads();
 
-  // now sync to DB in background
+  // Sync to DB
   try {
-    var wasContacted = !contactedSet[lead.name]; // after optimistic flip
-    if (contactedSet[lead.name]) {
-      // we just added it
+    if (!currentlyContacted) {
       await sbPost('contacted', {
         business_name: lead.name,
         location: lead.address,
@@ -254,19 +255,17 @@ async function toggleContacted(i) {
       });
       showToast(lead.name + ' marked as contacted', 'success');
     } else {
-      // we just removed it
       await sbDelete('contacted?business_name=eq.' + encodeURIComponent(lead.name));
       showToast('Unmarked ' + lead.name, '');
     }
-    // re-sync from DB to make sure we're consistent
+    // Refresh to ensure server-side timestamp is captured
     await loadContacted();
     renderLeads();
   } catch(e) {
     console.error('toggleContacted DB error:', e);
-    // rollback the optimistic update
+    showToast('Save failed — check database access', 'err');
     await loadContacted();
     renderLeads();
-    showToast('Save failed — check your Supabase RLS settings', 'err');
   }
 
   saving[lead.name] = false;
@@ -314,14 +313,19 @@ async function undoContact(name) {
   try {
     delete contactedSet[name];
     updateContactedCount();
+    renderLog(); // Re-render log immediately
+    renderLeads(); // Re-render leads immediately
+    
     await sbDelete('contacted?business_name=eq.' + encodeURIComponent(name));
     showToast('Unmarked ' + name, '');
+    
+    await loadContacted();
+    renderLog();
+    renderLeads();
   } catch(e) {
     console.error(e);
+    showToast('Undo failed', 'err');
   }
-  await loadContacted();
-  renderLog();
-  renderLeads();
 }
 
 function setFilter(f) {
