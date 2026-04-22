@@ -48,10 +48,11 @@ input:focus{border-color:#444;}
 .lead-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;}
 .lead-left{display:flex;align-items:flex-start;gap:10px;}
 .custom-check{width:18px;height:18px;border:1.5px solid #444;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;background:transparent;margin-top:2px;user-select:none;}
-.custom-check:hover{border-color:#666;}
+.custom-check:hover{border-color:#888;}
 .custom-check.checked{background:var(--accent);border-color:var(--accent);}
 .custom-check.checked::after{content:'';display:block;width:5px;height:9px;border:2px solid #0a0a0a;border-top:none;border-left:none;transform:rotate(45deg);margin-top:-2px;}
-.custom-check.loading{opacity:0.4;pointer-events:none;}
+.custom-check.saving{opacity:0.5;pointer-events:none;border-color:#555;animation:pulse 0.8s infinite;}
+@keyframes pulse{0%,100%{opacity:0.5;}50%{opacity:0.9;}}
 .lead-name{font-size:15px;font-weight:600;color:var(--text);}
 .lead-card.contacted .lead-name{text-decoration:line-through;color:var(--muted);}
 .lead-type{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;}
@@ -93,6 +94,10 @@ input:focus{border-color:#444;}
 .log-meta{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:2px;}
 .btn-undo{background:none;border:1px solid var(--border);border-radius:5px;padding:3px 10px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;flex-shrink:0;transition:all 0.15s;}
 .btn-undo:hover{color:var(--red);border-color:var(--red);}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 18px;font-size:12px;font-family:'DM Mono',monospace;color:var(--text);opacity:0;transition:all 0.25s;pointer-events:none;z-index:999;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.success{border-color:#2a4010;color:var(--accent);}
+.toast.err{border-color:#3a1010;color:var(--red);}
 </style>
 </head>
 <body>
@@ -144,68 +149,127 @@ input:focus{border-color:#444;}
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-const SUPABASE_URL = 'https://qbyvpbziiyxpshohmdlj.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFieXZwYnppaXl4cHNob2htZGxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzQ3NDgsImV4cCI6MjA5MjQ1MDc0OH0.ircbHei7Zhmb6SJnVT1BTA9M2LfDKIhFWQApB53IhpA';
-const SB_HEADERS = {
-  'apikey': SUPABASE_KEY,
-  'Authorization': 'Bearer ' + SUPABASE_KEY,
-  'Content-Type': 'application/json'
-};
+var SUPABASE_URL = 'https://qbyvpbziiyxpshohmdlj.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFieXZwYnppaXl4cHNob2htZGxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzQ3NDgsImV4cCI6MjA5MjQ1MDc0OH0.ircbHei7Zhmb6SJnVT1BTA9M2LfDKIhFWQApB53IhpA';
 
-let allLeads = [];
-let contactedSet = {};
-let currentSort = 'reviews';
-let currentFilter = 'all';
+var allLeads = [];
+var contactedSet = {};
+var currentSort = 'reviews';
+var currentFilter = 'all';
+var saving = {};
 
-async function sbFetch(path, opts) {
-  opts = opts || {};
-  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
-    ...opts,
-    headers: { ...SB_HEADERS, ...(opts.headers || {}) }
+function sbHeaders(extra) {
+  var h = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json'
+  };
+  if (extra) Object.assign(h, extra);
+  return h;
+}
+
+function showToast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + (type || '');
+  clearTimeout(el._t);
+  el._t = setTimeout(function() { el.className = 'toast'; }, 2200);
+}
+
+async function sbGet(path) {
+  var res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    method: 'GET',
+    headers: sbHeaders()
   });
-  if (res.status === 204) return null;
-  if (!res.ok) { const t = await res.text(); throw new Error(t); }
+  if (!res.ok) throw new Error(await res.text());
   return res.json();
+}
+
+async function sbPost(path, body) {
+  var res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    method: 'POST',
+    headers: sbHeaders({'Prefer': 'resolution=merge-duplicates,return=representation'}),
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.status === 204 ? null : res.json();
+}
+
+async function sbDelete(path) {
+  var res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    method: 'DELETE',
+    headers: sbHeaders()
+  });
+  if (!res.ok) throw new Error(await res.text());
 }
 
 async function loadContacted() {
   try {
-    const data = await sbFetch('contacted?select=business_name,location,reviews,contacted_at&order=contacted_at.desc');
+    var data = await sbGet('contacted?select=business_name,location,reviews,contacted_at&order=contacted_at.desc');
     contactedSet = {};
     (data || []).forEach(function(r) { contactedSet[r.business_name] = r; });
     updateContactedCount();
     setDbStatus(true);
+    return true;
   } catch(e) {
-    console.error('loadContacted error:', e);
+    console.error('loadContacted:', e);
     setDbStatus(false);
+    return false;
   }
 }
 
-async function markContacted(name, location, reviews) {
-  try {
-    await sbFetch('contacted', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify({ business_name: name, location: location, reviews: reviews })
-    });
-    await loadContacted();
-    renderLeads();
-  } catch(e) {
-    console.error('markContacted error:', e);
-    alert('Could not save — check console for details.');
-  }
-}
+async function toggleContacted(i) {
+  var filtered = getFiltered();
+  var lead = filtered[i];
+  if (!lead || saving[lead.name]) return;
 
-async function unmarkContacted(name) {
+  saving[lead.name] = true;
+
+  // optimistic UI update first — tick immediately, don't wait for DB
+  if (contactedSet[lead.name]) {
+    delete contactedSet[lead.name];
+  } else {
+    contactedSet[lead.name] = {
+      business_name: lead.name,
+      location: lead.address,
+      reviews: lead.reviewCount,
+      contacted_at: new Date().toISOString()
+    };
+  }
+  updateContactedCount();
+  renderLeads();
+
+  // now sync to DB in background
   try {
-    await sbFetch('contacted?business_name=eq.' + encodeURIComponent(name), { method: 'DELETE' });
+    var wasContacted = !contactedSet[lead.name]; // after optimistic flip
+    if (contactedSet[lead.name]) {
+      // we just added it
+      await sbPost('contacted', {
+        business_name: lead.name,
+        location: lead.address,
+        reviews: lead.reviewCount
+      });
+      showToast(lead.name + ' marked as contacted', 'success');
+    } else {
+      // we just removed it
+      await sbDelete('contacted?business_name=eq.' + encodeURIComponent(lead.name));
+      showToast('Unmarked ' + lead.name, '');
+    }
+    // re-sync from DB to make sure we're consistent
     await loadContacted();
     renderLeads();
-    if (document.getElementById('panel-log').style.display !== 'none') renderLog();
   } catch(e) {
-    console.error('unmarkContacted error:', e);
+    console.error('toggleContacted DB error:', e);
+    // rollback the optimistic update
+    await loadContacted();
+    renderLeads();
+    showToast('Save failed — check your Supabase RLS settings', 'err');
   }
+
+  saving[lead.name] = false;
 }
 
 function setDbStatus(ok) {
@@ -237,14 +301,27 @@ async function renderLog() {
   var rows = keys.map(function(name) {
     var r = contactedSet[name];
     var date = r.contacted_at ? new Date(r.contacted_at).toLocaleDateString('en-GB') : '—';
-    return '<div class="log-row"><div><div class="log-name">' + esc(name) + '</div><div class="log-meta">' + esc(r.location || '') + ' · ' + (r.reviews || '?') + ' reviews · ' + date + '</div></div><button class="btn-undo" onclick="undoContact(' + JSON.stringify(name) + ')">undo</button></div>';
+    return '<div class="log-row">' +
+      '<div><div class="log-name">' + esc(name) + '</div>' +
+      '<div class="log-meta">' + esc(r.location || '') + ' · ' + (r.reviews || '?') + ' reviews · ' + date + '</div></div>' +
+      '<button class="btn-undo" onclick="undoContact(' + JSON.stringify(name) + ')">undo</button>' +
+      '</div>';
   }).join('');
   el.innerHTML = '<div class="log-card"><h3>' + keys.length + ' business' + (keys.length !== 1 ? 'es' : '') + ' contacted</h3>' + rows + '</div>';
 }
 
 async function undoContact(name) {
-  await unmarkContacted(name);
+  try {
+    delete contactedSet[name];
+    updateContactedCount();
+    await sbDelete('contacted?business_name=eq.' + encodeURIComponent(name));
+    showToast('Unmarked ' + name, '');
+  } catch(e) {
+    console.error(e);
+  }
+  await loadContacted();
   renderLog();
+  renderLeads();
 }
 
 function setFilter(f) {
@@ -261,21 +338,24 @@ function sortBy(key, rerender) {
   document.querySelectorAll('.sort-btn').forEach(function(b) { b.classList.remove('active'); });
   document.getElementById('sort' + key.charAt(0).toUpperCase() + key.slice(1)).classList.add('active');
   allLeads.sort(function(a, b) {
-    return key === 'reviews' ? b.reviewCount - a.reviewCount : key === 'rating' ? b.rating - a.rating : b.score - a.score;
+    return key === 'reviews' ? b.reviewCount - a.reviewCount
+         : key === 'rating'  ? b.rating - a.rating
+         : b.score - a.score;
   });
   if (rerender) renderLeads();
 }
 
 function getFiltered() {
   if (currentFilter === 'pending') return allLeads.filter(function(l) { return !contactedSet[l.name]; });
-  if (currentFilter === 'done') return allLeads.filter(function(l) { return !!contactedSet[l.name]; });
+  if (currentFilter === 'done')    return allLeads.filter(function(l) { return  !!contactedSet[l.name]; });
   return allLeads;
 }
 
 async function runSearch() {
-  var trade = document.getElementById('trade').value.trim();
+  var trade    = document.getElementById('trade').value.trim();
   var location = document.getElementById('location').value.trim();
   if (!trade || !location) return;
+
   var btn = document.getElementById('searchBtn');
   btn.disabled = true; btn.textContent = 'Searching...';
   document.getElementById('emptyState').style.display = 'none';
@@ -287,32 +367,32 @@ async function runSearch() {
   await loadContacted();
 
   try {
-    var geoRes = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(trade + ' ' + location + ' UK') + '&format=json&limit=1&countrycodes=gb', { headers: { 'Accept-Language': 'en' } });
+    var geoRes  = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(trade + ' ' + location + ' UK') + '&format=json&limit=1&countrycodes=gb', { headers: {'Accept-Language':'en'} });
     var geoData = await geoRes.json();
     var lat = 52.48, lon = -1.89;
     if (geoData && geoData[0]) { lat = parseFloat(geoData[0].lat); lon = parseFloat(geoData[0].lon); }
 
-    var q = '[out:json][timeout:25];(node["shop"](around:5000,' + lat + ',' + lon + ');node["amenity"](around:5000,' + lat + ',' + lon + ');node["craft"](around:5000,' + lat + ',' + lon + ');way["shop"](around:5000,' + lat + ',' + lon + ');way["amenity"](around:5000,' + lat + ',' + lon + ');way["craft"](around:5000,' + lat + ',' + lon + '););out center 40;';
-    var opRes = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: q, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
-    var opData = await opRes.json();
+    var q = '[out:json][timeout:25];(node["shop"](around:5000,'+lat+','+lon+');node["amenity"](around:5000,'+lat+','+lon+');node["craft"](around:5000,'+lat+','+lon+');way["shop"](around:5000,'+lat+','+lon+');way["amenity"](around:5000,'+lat+','+lon+');way["craft"](around:5000,'+lat+','+lon+'););out center 40;';
+    var opRes   = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:q, headers:{'Content-Type':'application/x-www-form-urlencoded'} });
+    var opData  = await opRes.json();
     var elements = opData.elements || [];
-    var tradeKw = trade.toLowerCase().split(/\s+/);
-    var leads = []; var seen = {};
+    var tradeKw  = trade.toLowerCase().split(/\s+/);
+    var leads = [], seen = {};
 
     elements.forEach(function(el) {
-      var tags = el.tags || {}; var name = tags.name;
+      var tags = el.tags || {}, name = tags.name;
       if (!name || seen[name]) return;
       var combined = (Object.values(tags).join(' ') + ' ' + Object.keys(tags).join(' ')).toLowerCase();
-      if (!tradeKw.some(function(kw) { return combined.indexOf(kw) !== -1; }) && elements.length > 5) return;
+      if (!tradeKw.some(function(kw){ return combined.indexOf(kw) !== -1; }) && elements.length > 5) return;
       seen[name] = true;
       if (tags.website || tags['contact:website'] || tags.url) return;
-      var reviewCount = Math.floor(Math.random() * 180) + 12;
-      var rating = parseFloat((3.9 + Math.random() * 1.0).toFixed(1));
-      leads.push({ name: name, type: (tags.craft || tags.shop || tags.amenity || 'business').replace(/_/g, ' '), address: location, reviewCount: reviewCount, rating: rating, score: Math.round(reviewCount * 0.5 + rating * 15 + 30) });
+      var rc = Math.floor(Math.random()*180)+12;
+      var rt = parseFloat((3.9+Math.random()*1.0).toFixed(1));
+      leads.push({ name:name, type:(tags.craft||tags.shop||tags.amenity||'business').replace(/_/g,' '), address:location, reviewCount:rc, rating:rt, score:Math.round(rc*0.5+rt*15+30) });
     });
 
     if (leads.length < 6) leads = leads.concat(generateFallback(trade, location, 12 - leads.length));
-    if (!leads.length) leads = generateFallback(trade, location, 10);
+    if (!leads.length)     leads = generateFallback(trade, location, 10);
     allLeads = leads;
   } catch(e) {
     allLeads = generateFallback(trade, location, 10);
@@ -327,21 +407,21 @@ async function runSearch() {
 
 function generateFallback(trade, location, count) {
   var map = {
-    plasterer: ['A&B Plastering','City Plastering Services','ProFinish Plastering','Smooth Coat Plastering','J&S Plasters','Excel Rendering','Quality Plasters','TradeCraft Plastering','Premier Plaster Co','TopCoat Finishing','Midlands Plastering','Local Plaster Pros'],
-    barber: ['Fade Masters','The Gents Cut','Sharp Cuts','Classic Barber Studio','The Fade House','Kings Barbers','Old School Barbers','The Clipper Room','Premier Cuts','Elite Barbers','Central Barbers','The Trim Shop'],
-    roofer: ['TopLine Roofing','AllWeather Roofing','Apex Roof Co','Solid Roof Services','Crown Roofing','ProRoof Solutions','Eagle Roofing','Shield Roofing','Vertex Roofing','Summit Roofing','Heritage Roofing','FastFix Roofing'],
-    plumber: ['QuickFlow Plumbing','AllPipes Ltd','Leak Stop Plumbing','TrustFlow Plumbers','First Fix Plumbing','Sure Flow Services','24/7 Plumbing Co','Premier Plumbing','FlowRight Plumbing','Citywide Plumbers','FastFix Plumbing','Local Plumbing Pros'],
+    plasterer:   ['A&B Plastering','City Plastering Services','ProFinish Plastering','Smooth Coat Plastering','J&S Plasters','Excel Rendering','Quality Plasters','TradeCraft Plastering','Premier Plaster Co','TopCoat Finishing','Midlands Plastering','Local Plaster Pros'],
+    barber:      ['Fade Masters','The Gents Cut','Sharp Cuts','Classic Barber Studio','The Fade House','Kings Barbers','Old School Barbers','The Clipper Room','Premier Cuts','Elite Barbers','Central Barbers','The Trim Shop'],
+    roofer:      ['TopLine Roofing','AllWeather Roofing','Apex Roof Co','Solid Roof Services','Crown Roofing','ProRoof Solutions','Eagle Roofing','Shield Roofing','Vertex Roofing','Summit Roofing','Heritage Roofing','FastFix Roofing'],
+    plumber:     ['QuickFlow Plumbing','AllPipes Ltd','Leak Stop Plumbing','TrustFlow Plumbers','First Fix Plumbing','Sure Flow Services','24/7 Plumbing Co','Premier Plumbing','FlowRight Plumbing','Citywide Plumbers','FastFix Plumbing','Local Plumbing Pros'],
     electrician: ['Bright Spark Electrics','PowerSafe Electrical','CircuitPro Electrics','Local Sparks','AllWire Electrical','SafeWire Services','CurrentFix Electrics','ProVolt Electrical','Citywide Electrics','Expert Sparks','FirstFix Electrics','Reliable Electrics'],
-    builder: ['SolidBuild Co','ProBuild Services','FoundationFirst Builders','BuildRight Ltd','CraftBuild','TradeBuild Solutions','Premier Builders','Sterling Builds','Quality Builds Ltd','TrustBuild Co','LocalBuild Services','Expert Builders'],
-    decorator: ['ProFinish Decorators','Fresh Coat Painting','ColorCraft Decorators','BrightWall Decorating','Premier Decorators','TrueCoat Painting','Expert Decorators','Quality Finish Decor','LocalPainters Pro','Ace Decorating','TopCoat Decorators','AllSurface Finishes']
+    builder:     ['SolidBuild Co','ProBuild Services','FoundationFirst Builders','BuildRight Ltd','CraftBuild','TradeBuild Solutions','Premier Builders','Sterling Builds','Quality Builds Ltd','TrustBuild Co','LocalBuild Services','Expert Builders'],
+    decorator:   ['ProFinish Decorators','Fresh Coat Painting','ColorCraft Decorators','BrightWall Decorating','Premier Decorators','TrueCoat Painting','Expert Decorators','Quality Finish Decor','LocalPainters Pro','Ace Decorating','TopCoat Decorators','AllSurface Finishes']
   };
-  var key = Object.keys(map).find(function(k) { return trade.toLowerCase().indexOf(k) !== -1; }) || 'plasterer';
+  var key   = Object.keys(map).find(function(k){ return trade.toLowerCase().indexOf(k) !== -1; }) || 'plasterer';
   var names = map[key] || map.plasterer;
   var result = [];
   for (var i = 0; i < Math.min(count, names.length); i++) {
-    var reviewCount = Math.floor(Math.random() * 180) + 12;
-    var rating = parseFloat((3.9 + Math.random() * 1.0).toFixed(1));
-    result.push({ name: names[i], type: key, address: location, reviewCount: reviewCount, rating: rating, score: Math.round(reviewCount * 0.5 + rating * 15 + 30) });
+    var rc = Math.floor(Math.random()*180)+12;
+    var rt = parseFloat((3.9+Math.random()*1.0).toFixed(1));
+    result.push({ name:names[i], type:key, address:location, reviewCount:rc, rating:rt, score:Math.round(rc*0.5+rt*15+30) });
   }
   return result;
 }
@@ -356,12 +436,12 @@ function buildMessage(lead) {
 
 function renderLeads() {
   var filtered = getFiltered();
-  var pending = allLeads.filter(function(l) { return !contactedSet[l.name]; }).length;
-  var done = allLeads.filter(function(l) { return !!contactedSet[l.name]; }).length;
+  var pending  = allLeads.filter(function(l){ return !contactedSet[l.name]; }).length;
+  var done     = allLeads.filter(function(l){ return  !!contactedSet[l.name]; }).length;
   document.getElementById('resultsCount').textContent = allLeads.length + ' leads — ' + pending + ' pending · ' + done + ' contacted';
 
-  var maxScore = Math.max.apply(null, allLeads.map(function(l) { return l.score; }).concat([1]));
-  var maxRev = Math.max.apply(null, allLeads.map(function(l) { return l.reviewCount; }).concat([1]));
+  var maxScore = Math.max.apply(null, allLeads.map(function(l){ return l.score; }).concat([1]));
+  var maxRev   = Math.max.apply(null, allLeads.map(function(l){ return l.reviewCount; }).concat([1]));
 
   if (!filtered.length) {
     document.getElementById('leadsList').innerHTML = '<div class="empty"><div class="empty-icon">✓</div>No leads match this filter</div>';
@@ -370,58 +450,49 @@ function renderLeads() {
 
   document.getElementById('leadsList').innerHTML = filtered.map(function(lead, i) {
     var isDone = !!contactedSet[lead.name];
-    var pct = Math.round((lead.score / maxScore) * 100);
+    var isSaving = !!saving[lead.name];
+    var pct  = Math.round((lead.score / maxScore) * 100);
     var rPct = Math.round((lead.reviewCount / maxRev) * 100);
     var dateStr = '';
-    if (isDone && contactedSet[lead.name].contacted_at) {
+    if (isDone && contactedSet[lead.name] && contactedSet[lead.name].contacted_at) {
       dateStr = new Date(contactedSet[lead.name].contacted_at).toLocaleDateString('en-GB');
     }
-    var barColor = isDone ? '#2a2a2a' : 'var(--accent)';
+    var barColor  = isDone ? '#2a2a2a' : 'var(--accent)';
     var bar2Color = isDone ? '#2a2a2a' : 'var(--accent2)';
+    var checkClass = 'custom-check' + (isDone ? ' checked' : '') + (isSaving ? ' saving' : '');
 
     return '<div class="lead-card' + (isDone ? ' contacted' : '') + '" id="card-' + i + '">' +
       '<div class="lead-top">' +
         '<div class="lead-left">' +
-          '<div class="custom-check' + (isDone ? ' checked' : '') + '" id="chk-' + i + '" onclick="toggleContacted(' + i + ')"></div>' +
+          '<div class="' + checkClass + '" id="chk-' + i + '" onclick="toggleContacted(' + i + ')"></div>' +
           '<div>' +
             '<div style="display:flex;align-items:center;gap:8px;"><span class="rank-num">#' + (i+1) + '</span><span class="lead-name">' + esc(lead.name) + '</span></div>' +
             '<div class="lead-type">' + esc(lead.type) + ' · ' + esc(lead.address) + '</div>' +
-            (isDone ? '<div class="contacted-stamp">messaged ' + dateStr + '</div>' : '') +
+            (isDone && dateStr ? '<div class="contacted-stamp">messaged ' + dateStr + '</div>' : '') +
           '</div>' +
         '</div>' +
         '<div class="badge-row">' +
           '<span class="badge badge-reviews">' + lead.reviewCount + ' reviews</span>' +
-          '<span class="badge badge-rating">' + lead.rating.toFixed(1) + ' ★</span>' +
+          '<span class="badge badge-rating">' + lead.rating.toFixed(1) + ' \u2605</span>' +
           (isDone ? '<span class="badge badge-contacted">contacted</span>' : '<span class="badge badge-noweb">no website</span>') +
         '</div>' +
       '</div>' +
-      '<div class="score-bar"><span class="score-label">opportunity</span><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div><span style="font-size:11px;font-family:DM Mono,monospace;color:var(--muted);min-width:28px;">' + pct + '</span></div>' +
-      '<div class="score-bar"><span class="score-label">review volume</span><div class="bar-track"><div class="bar-fill" style="width:' + rPct + '%;background:' + bar2Color + '"></div></div><span style="font-size:11px;font-family:DM Mono,monospace;color:var(--muted);min-width:28px;">' + rPct + '</span></div>' +
+      '<div class="score-bar"><span class="score-label">opportunity</span><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div><span style="font-size:11px;font-family:\'DM Mono\',monospace;color:var(--muted);min-width:28px;">' + pct + '</span></div>' +
+      '<div class="score-bar"><span class="score-label">review volume</span><div class="bar-track"><div class="bar-fill" style="width:' + rPct + '%;background:' + bar2Color + '"></div></div><span style="font-size:11px;font-family:\'DM Mono\',monospace;color:var(--muted);min-width:28px;">' + rPct + '</span></div>' +
       '<div class="lead-actions">' +
         '<button class="btn-msg btn-primary" onclick="toggleMsg(' + i + ')">Write outreach message</button>' +
-        '<button class="btn-msg btn-secondary" onclick="window.open(\'https://claude.ai\',\'_blank\')">More angles</button>' +
+        '<button class="btn-msg btn-secondary" style="cursor:default;opacity:0.5;">More angles</button>' +
       '</div>' +
       '<div class="msg-box" id="msg-' + i + '"></div>' +
     '</div>';
   }).join('');
 }
 
-function toggleContacted(i) {
-  var filtered = getFiltered();
-  var lead = filtered[i];
-  if (!lead) return;
-  if (contactedSet[lead.name]) {
-    unmarkContacted(lead.name);
-  } else {
-    markContacted(lead.name, lead.address, lead.reviewCount);
-  }
-}
-
 function toggleMsg(i) {
   var filtered = getFiltered();
   var lead = filtered[i];
-  var box = document.getElementById('msg-' + i);
-  var btn = document.querySelector('#card-' + i + ' .btn-primary');
+  var box  = document.getElementById('msg-' + i);
+  var btn  = document.querySelector('#card-' + i + ' .btn-primary');
   if (!box || !lead) return;
   if (box.classList.contains('show')) {
     box.classList.remove('show');
@@ -429,7 +500,11 @@ function toggleMsg(i) {
     return;
   }
   var msg = buildMessage(lead);
-  box.innerHTML = esc(msg) + '<div class="copy-row"><span class="copy-hint">copy · then tick checkbox once sent</span><button class="btn-copy" id="copy-' + i + '" onclick="copyMsg(' + i + ')">Copy message</button></div>';
+  box.innerHTML = esc(msg) +
+    '<div class="copy-row">' +
+      '<span class="copy-hint">copy · then tick checkbox once sent</span>' +
+      '<button class="btn-copy" id="copy-' + i + '" onclick="copyMsg(' + i + ')">Copy message</button>' +
+    '</div>';
   box._msg = msg;
   box.classList.add('show');
   btn.textContent = 'Hide message';
@@ -443,7 +518,7 @@ function copyMsg(i) {
     if (!btn) return;
     btn.textContent = 'Copied!';
     btn.classList.add('copied');
-    setTimeout(function() { btn.textContent = 'Copy message'; btn.classList.remove('copied'); }, 2000);
+    setTimeout(function(){ btn.textContent = 'Copy message'; btn.classList.remove('copied'); }, 2000);
   });
 }
 
