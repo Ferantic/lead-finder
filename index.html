@@ -1,99 +1,110 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lead Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet"/>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap');
-  *{box-sizing:border-box;margin:0;padding:0;}
-  :root{
-    --bg:#0a0a0a;--surface:#111;--surface2:#181818;--border:#222;--accent:#b9ff66;--accent2:#66ffda;
-    --text:#f0f0f0;--muted:#666;--red:#ff4d4d;
-  }
-  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;}
-  .app{padding:24px;max-width:780px;margin:0 auto;}
-  .header{margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;}
-  .header h1{font-size:22px;font-weight:700;letter-spacing:-0.5px;}
-  .header p{font-size:12px;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace;}
-  .contacted-badge{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
-  .contacted-badge:hover{border-color:#333;color:var(--text);}
-  .contacted-badge b{color:var(--accent);}
-  .search-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:16px;}
-  .field label{display:block;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:6px;letter-spacing:0.5px;text-transform:uppercase;}
-  input,select{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'Syne',sans-serif;outline:none;transition:border 0.2s;}
-  input:focus,select:focus{border-color:#333;}
-  .btn-search{align-self:flex-end;padding:10px 20px;background:var(--accent);color:#0a0a0a;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity 0.15s;}
-  .btn-search:hover{opacity:0.85;}
-  .btn-search:disabled{opacity:0.4;cursor:not-allowed;}
-  .filter-row{display:flex;gap:8px;margin-bottom:16px;align-items:center;}
-  .filter-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;}
-  .filter-btn.active{background:var(--surface2);border-color:#444;color:var(--text);}
-  .filter-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);margin-right:4px;}
-  .status-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:16px;display:none;}
-  .status-bar.show{display:block;}
-  .status-bar span{color:var(--accent);}
-  .results-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
-  .results-header h2{font-size:12px;font-weight:600;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;}
-  .sort-row{display:flex;gap:6px;}
-  .sort-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;}
-  .sort-btn.active{background:var(--surface2);border-color:#444;color:var(--text);}
-  .lead-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;transition:border 0.2s,opacity 0.3s;}
-  .lead-card:hover{border-color:#2a2a2a;}
-  .lead-card.contacted{opacity:0.45;border-color:var(--border);}
-  .lead-card.contacted:hover{border-color:#2a2a2a;}
-  .lead-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px;}
-  .lead-left{display:flex;align-items:flex-start;gap:10px;}
-  .check-wrap{padding-top:2px;}
-  .custom-check{width:18px;height:18px;border:1.5px solid #333;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;background:transparent;}
-  .custom-check.checked{background:var(--accent);border-color:var(--accent);}
-  .custom-check.checked::after{content:'';display:block;width:5px;height:9px;border:2px solid #0a0a0a;border-top:none;border-left:none;transform:rotate(45deg);margin-top:-2px;}
-  .lead-name{font-size:15px;font-weight:600;color:var(--text);}
-  .lead-card.contacted .lead-name{text-decoration:line-through;color:var(--muted);}
-  .lead-type{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;}
-  .badge-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
-  .badge{font-size:11px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:5px;font-weight:500;}
-  .badge-reviews{background:#1a2a0a;color:var(--accent);border:1px solid #2a4010;}
-  .badge-rating{background:#1a1a0a;color:#ffd966;border:1px solid #3a3000;}
-  .badge-noweb{background:#1a0a0a;color:var(--red);border:1px solid #3a1010;}
-  .badge-contacted{background:#1a2a2a;color:var(--accent2);border:1px solid #0e3030;}
-  .score-bar{display:flex;align-items:center;gap:8px;margin:6px 0;}
-  .score-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);width:90px;flex-shrink:0;}
-  .bar-track{flex:1;height:4px;background:#1e1e1e;border-radius:2px;}
-  .bar-fill{height:4px;border-radius:2px;transition:width 0.5s;}
-  .lead-actions{display:flex;gap:8px;margin-top:12px;}
-  .lead-card.contacted .lead-actions{opacity:0.5;pointer-events:none;}
-  .btn-msg{flex:1;padding:9px 12px;border-radius:7px;font-size:12px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;border:none;transition:opacity 0.15s;}
-  .btn-msg:hover{opacity:0.8;}
-  .btn-primary{background:var(--accent);color:#0a0a0a;}
-  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
-  .msg-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:10px;font-size:12px;line-height:1.75;color:var(--text);white-space:pre-wrap;display:none;font-family:'DM Mono',monospace;}
-  .msg-box.show{display:block;}
-  .copy-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px;}
-  .copy-hint{font-size:11px;color:var(--muted);}
-  .btn-copy{background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;}
-  .btn-copy:hover{background:var(--surface);color:var(--text);}
-  .btn-copy.copied{color:var(--accent);border-color:#2a4010;}
-  .empty{text-align:center;padding:48px 20px;color:var(--muted);font-family:'DM Mono',monospace;font-size:13px;}
-  .empty-icon{font-size:28px;margin-bottom:12px;opacity:0.3;}
-  .rank-num{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);min-width:20px;padding-top:1px;}
-  .notice{background:#111;border:1px solid #1e2e0e;border-radius:8px;padding:10px 14px;font-size:12px;color:#789060;font-family:'DM Mono',monospace;margin-bottom:18px;line-height:1.6;}
-  .contacted-stamp{font-size:11px;font-family:'DM Mono',monospace;color:var(--accent2);margin-top:6px;}
-  .contacted-log{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;}
-  .contacted-log h3{font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;}
-  .log-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--border);font-size:13px;}
-  .log-name{color:var(--text);}
-  .log-meta{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);}
-  .btn-uncheck{background:none;border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;}
-  .btn-uncheck:hover{color:var(--red);border-color:var(--red);}
-  .tab-row{display:flex;gap:0;margin-bottom:20px;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
-  .tab{flex:1;padding:9px;text-align:center;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;background:none;border:none;transition:all 0.15s;}
-  .tab.active{background:var(--surface2);color:var(--text);}
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a0a0a;--surface:#111;--surface2:#181818;--border:#222;--accent:#b9ff66;--accent2:#66ffda;
+  --text:#f0f0f0;--muted:#666;--red:#ff4d4d;
+}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;}
+.app{padding:24px;max-width:780px;margin:0 auto;}
+.header{margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;}
+.header h1{font-size:22px;font-weight:700;letter-spacing:-0.5px;}
+.header p{font-size:12px;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace;}
+.db-status{display:flex;align-items:center;gap:6px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);}
+.db-dot{width:7px;height:7px;border-radius:50%;background:#333;transition:background 0.3s;}
+.db-dot.connected{background:var(--accent);}
+.db-dot.error{background:var(--red);}
+.contacted-badge{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.contacted-badge:hover{border-color:#333;color:var(--text);}
+.contacted-badge b{color:var(--accent);}
+.search-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:16px;}
+@media(max-width:520px){.search-row{grid-template-columns:1fr;}}
+.field label{display:block;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:6px;letter-spacing:0.5px;text-transform:uppercase;}
+input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'Syne',sans-serif;outline:none;transition:border 0.2s;}
+input:focus{border-color:#444;}
+.btn-search{align-self:flex-end;padding:10px 20px;background:var(--accent);color:#0a0a0a;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity 0.15s;}
+.btn-search:hover{opacity:0.85;}
+.btn-search:disabled{opacity:0.4;cursor:not-allowed;}
+.filter-row{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
+.filter-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);margin-right:4px;}
+.filter-btn,.sort-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;}
+.filter-btn.active,.sort-btn.active{background:var(--surface2);border-color:#444;color:var(--text);}
+.sort-wrap{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;}
+.status-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:16px;display:none;}
+.status-bar.show{display:block;}
+.status-bar span{color:var(--accent);}
+.results-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.results-header h2{font-size:12px;font-weight:600;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;}
+.lead-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;transition:border 0.2s,opacity 0.3s;}
+.lead-card:hover{border-color:#2a2a2a;}
+.lead-card.contacted{opacity:0.42;}
+.lead-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;}
+.lead-left{display:flex;align-items:flex-start;gap:10px;}
+.custom-check{width:18px;height:18px;border:1.5px solid #444;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;background:transparent;margin-top:2px;user-select:none;}
+.custom-check:hover{border-color:#666;}
+.custom-check.checked{background:var(--accent);border-color:var(--accent);}
+.custom-check.checked::after{content:'';display:block;width:5px;height:9px;border:2px solid #0a0a0a;border-top:none;border-left:none;transform:rotate(45deg);margin-top:-2px;}
+.custom-check.loading{opacity:0.4;pointer-events:none;}
+.lead-name{font-size:15px;font-weight:600;color:var(--text);}
+.lead-card.contacted .lead-name{text-decoration:line-through;color:var(--muted);}
+.lead-type{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;}
+.contacted-stamp{font-size:11px;font-family:'DM Mono',monospace;color:var(--accent2);margin-top:3px;}
+.badge-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
+.badge{font-size:11px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:5px;font-weight:500;}
+.badge-reviews{background:#1a2a0a;color:var(--accent);border:1px solid #2a4010;}
+.badge-rating{background:#1a1a0a;color:#ffd966;border:1px solid #3a3000;}
+.badge-noweb{background:#1a0a0a;color:var(--red);border:1px solid #3a1010;}
+.badge-contacted{background:#0a2020;color:var(--accent2);border:1px solid #0e3030;}
+.score-bar{display:flex;align-items:center;gap:8px;margin:6px 0;}
+.score-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);width:90px;flex-shrink:0;}
+.bar-track{flex:1;height:4px;background:#1e1e1e;border-radius:2px;}
+.bar-fill{height:4px;border-radius:2px;transition:width 0.5s;}
+.lead-actions{display:flex;gap:8px;margin-top:12px;}
+.lead-card.contacted .lead-actions{opacity:0.4;pointer-events:none;}
+.btn-msg{flex:1;padding:9px 12px;border-radius:7px;font-size:12px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;border:none;transition:opacity 0.15s;}
+.btn-msg:hover{opacity:0.8;}
+.btn-primary{background:var(--accent);color:#0a0a0a;}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.msg-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:10px;font-size:12px;line-height:1.75;color:var(--text);white-space:pre-wrap;display:none;font-family:'DM Mono',monospace;}
+.msg-box.show{display:block;}
+.copy-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px;flex-wrap:wrap;}
+.copy-hint{font-size:11px;color:var(--muted);}
+.btn-copy{background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;}
+.btn-copy:hover{background:var(--surface);color:var(--text);}
+.btn-copy.copied{color:var(--accent);border-color:#2a4010;}
+.empty{text-align:center;padding:48px 20px;color:var(--muted);font-family:'DM Mono',monospace;font-size:13px;}
+.empty-icon{font-size:28px;margin-bottom:12px;opacity:0.3;}
+.rank-num{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);min-width:20px;padding-top:1px;}
+.notice{background:#111;border:1px solid #1e2e0e;border-radius:8px;padding:10px 14px;font-size:12px;color:#789060;font-family:'DM Mono',monospace;margin-bottom:18px;line-height:1.6;}
+.tab-row{display:flex;margin-bottom:20px;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.tab{flex:1;padding:9px;text-align:center;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;background:none;border:none;transition:all 0.15s;}
+.tab.active{background:var(--surface2);color:var(--text);}
+.log-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;}
+.log-card h3{font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;}
+.log-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--border);gap:10px;}
+.log-name{font-size:13px;color:var(--text);}
+.log-meta{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:2px;}
+.btn-undo{background:none;border:1px solid var(--border);border-radius:5px;padding:3px 10px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;flex-shrink:0;transition:all 0.15s;}
+.btn-undo:hover{color:var(--red);border-color:var(--red);}
 </style>
-
+</head>
+<body>
 <div class="app">
   <div class="header">
     <div>
       <h1>Lead finder</h1>
-      <p>// tick a business after you message them — saved permanently</p>
+      <p>// shared across all devices via supabase</p>
     </div>
-    <div class="contacted-badge" onclick="switchTab('log')">
-      contacted: <b id="contactedCount">0</b>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+      <div class="db-status"><div class="db-dot" id="dbDot"></div><span id="dbLabel">connecting...</span></div>
+      <div class="contacted-badge" onclick="switchTab('log')">contacted: <b id="contactedCount">—</b></div>
     </div>
   </div>
 
@@ -103,85 +114,110 @@
   </div>
 
   <div id="panel-leads">
-    <div class="notice">Enter a trade + UK town. Leads with no website are ranked by opportunity. Tick the checkbox after you send a message — it saves permanently so you never double-contact anyone.</div>
-
+    <div class="notice">Tick a business after you send the message — saved to the shared database instantly. Everyone using this link sees the same contacted list in real time.</div>
     <div class="search-row">
-      <div class="field">
-        <label>Trade / business type</label>
-        <input id="trade" type="text" placeholder="e.g. plasterer, barber, roofer" value="plasterer" />
-      </div>
-      <div class="field">
-        <label>UK town or city</label>
-        <input id="location" type="text" placeholder="e.g. Birmingham, Leeds" value="Birmingham" />
-      </div>
+      <div class="field"><label>Trade / business type</label><input id="trade" type="text" placeholder="e.g. plasterer, barber, roofer" value="plasterer"/></div>
+      <div class="field"><label>UK town or city</label><input id="location" type="text" placeholder="e.g. Birmingham, Leeds" value="Birmingham"/></div>
       <button class="btn-search" id="searchBtn" onclick="runSearch()">Search</button>
     </div>
-
     <div class="filter-row">
       <span class="filter-label">show:</span>
       <button class="filter-btn active" id="filter-all" onclick="setFilter('all')">All</button>
       <button class="filter-btn" id="filter-pending" onclick="setFilter('pending')">Not contacted</button>
       <button class="filter-btn" id="filter-done" onclick="setFilter('done')">Contacted</button>
-      <div style="margin-left:auto;display:flex;gap:6px;">
+      <div class="sort-wrap">
         <button class="sort-btn active" id="sortReviews" onclick="sortBy('reviews')">By reviews</button>
         <button class="sort-btn" id="sortRating" onclick="sortBy('rating')">By rating</button>
         <button class="sort-btn" id="sortScore" onclick="sortBy('score')">By score</button>
       </div>
     </div>
-
     <div class="status-bar" id="statusBar">Searching for <span id="statusText"></span>...</div>
-
-    <div id="resultsWrap" style="display:none">
-      <div class="results-header">
-        <h2 id="resultsCount">0 leads</h2>
-      </div>
+    <div id="resultsWrap" style="display:none;">
+      <div class="results-header"><h2 id="resultsCount">0 leads</h2></div>
       <div id="leadsList"></div>
     </div>
-
-    <div class="empty" id="emptyState">
-      <div class="empty-icon">◎</div>
-      Enter a trade type and town above to find leads
-    </div>
+    <div class="empty" id="emptyState"><div class="empty-icon">◎</div>Enter a trade type and town above to find leads</div>
   </div>
 
-  <div id="panel-log" style="display:none">
-    <div id="logContent"></div>
+  <div id="panel-log" style="display:none;">
+    <div id="logContent"><div class="empty"><div class="empty-icon">↻</div>Loading...</div></div>
   </div>
 </div>
 
 <script>
-const STORAGE_KEY = 'leadfinder_contacted_v1';
+const SUPABASE_URL = 'https://qbyvpbziiyxpshohmdlj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFieXZwYnppaXl4cHNob2htZGxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzQ3NDgsImV4cCI6MjA5MjQ1MDc0OH0.ircbHei7Zhmb6SJnVT1BTA9M2LfDKIhFWQApB53IhpA';
+const SB_HEADERS = {
+  'apikey': SUPABASE_KEY,
+  'Authorization': 'Bearer ' + SUPABASE_KEY,
+  'Content-Type': 'application/json'
+};
+
 let allLeads = [];
+let contactedSet = {};
 let currentSort = 'reviews';
 let currentFilter = 'all';
-let activeTab = 'leads';
 
-function loadContacted() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
+async function sbFetch(path, opts) {
+  opts = opts || {};
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    ...opts,
+    headers: { ...SB_HEADERS, ...(opts.headers || {}) }
+  });
+  if (res.status === 204) return null;
+  if (!res.ok) { const t = await res.text(); throw new Error(t); }
+  return res.json();
 }
-function saveContacted(data) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+
+async function loadContacted() {
+  try {
+    const data = await sbFetch('contacted?select=business_name,location,reviews,contacted_at&order=contacted_at.desc');
+    contactedSet = {};
+    (data || []).forEach(function(r) { contactedSet[r.business_name] = r; });
+    updateContactedCount();
+    setDbStatus(true);
+  } catch(e) {
+    console.error('loadContacted error:', e);
+    setDbStatus(false);
+  }
 }
-function isContacted(name) { return !!loadContacted()[name]; }
-function markContacted(name, location, reviews) {
-  const d = loadContacted();
-  d[name] = { date: new Date().toLocaleDateString('en-GB'), location, reviews };
-  saveContacted(d);
-  updateContactedCount();
+
+async function markContacted(name, location, reviews) {
+  try {
+    await sbFetch('contacted', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ business_name: name, location: location, reviews: reviews })
+    });
+    await loadContacted();
+    renderLeads();
+  } catch(e) {
+    console.error('markContacted error:', e);
+    alert('Could not save — check console for details.');
+  }
 }
-function unmarkContacted(name) {
-  const d = loadContacted();
-  delete d[name];
-  saveContacted(d);
-  updateContactedCount();
+
+async function unmarkContacted(name) {
+  try {
+    await sbFetch('contacted?business_name=eq.' + encodeURIComponent(name), { method: 'DELETE' });
+    await loadContacted();
+    renderLeads();
+    if (document.getElementById('panel-log').style.display !== 'none') renderLog();
+  } catch(e) {
+    console.error('unmarkContacted error:', e);
+  }
 }
+
+function setDbStatus(ok) {
+  document.getElementById('dbDot').className = 'db-dot ' + (ok ? 'connected' : 'error');
+  document.getElementById('dbLabel').textContent = ok ? 'connected' : 'db error';
+}
+
 function updateContactedCount() {
-  const count = Object.keys(loadContacted()).length;
-  document.getElementById('contactedCount').textContent = count;
+  document.getElementById('contactedCount').textContent = Object.keys(contactedSet).length;
 }
 
 function switchTab(tab) {
-  activeTab = tab;
   document.getElementById('panel-leads').style.display = tab === 'leads' ? 'block' : 'none';
   document.getElementById('panel-log').style.display = tab === 'log' ? 'block' : 'none';
   document.getElementById('tab-leads').classList.toggle('active', tab === 'leads');
@@ -189,230 +225,229 @@ function switchTab(tab) {
   if (tab === 'log') renderLog();
 }
 
-function renderLog() {
-  const d = loadContacted();
-  const keys = Object.keys(d);
-  const el = document.getElementById('logContent');
-  if (keys.length === 0) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">✓</div>No businesses marked as contacted yet</div>';
+async function renderLog() {
+  var el = document.getElementById('logContent');
+  el.innerHTML = '<div class="empty"><div class="empty-icon">↻</div>Loading...</div>';
+  await loadContacted();
+  var keys = Object.keys(contactedSet);
+  if (!keys.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✓</div>No businesses contacted yet</div>';
     return;
   }
-  el.innerHTML = `<div class="contacted-log">
-    <h3>${keys.length} business${keys.length !== 1 ? 'es' : ''} contacted</h3>
-    ${keys.map(name => `
-      <div class="log-row">
-        <div>
-          <div class="log-name">${name}</div>
-          <div class="log-meta">${d[name].location} · ${d[name].reviews} reviews · messaged ${d[name].date}</div>
-        </div>
-        <button class="btn-uncheck" onclick="undoContact('${name.replace(/'/g,"\\'")}')">undo</button>
-      </div>`).join('')}
-  </div>`;
+  var rows = keys.map(function(name) {
+    var r = contactedSet[name];
+    var date = r.contacted_at ? new Date(r.contacted_at).toLocaleDateString('en-GB') : '—';
+    return '<div class="log-row"><div><div class="log-name">' + esc(name) + '</div><div class="log-meta">' + esc(r.location || '') + ' · ' + (r.reviews || '?') + ' reviews · ' + date + '</div></div><button class="btn-undo" onclick="undoContact(' + JSON.stringify(name) + ')">undo</button></div>';
+  }).join('');
+  el.innerHTML = '<div class="log-card"><h3>' + keys.length + ' business' + (keys.length !== 1 ? 'es' : '') + ' contacted</h3>' + rows + '</div>';
 }
 
-function undoContact(name) {
-  unmarkContacted(name);
+async function undoContact(name) {
+  await unmarkContacted(name);
   renderLog();
-  if (allLeads.length) renderLeads();
 }
 
 function setFilter(f) {
   currentFilter = f;
-  ['all','pending','done'].forEach(k => document.getElementById('filter-'+k).classList.toggle('active', k === f));
+  ['all','pending','done'].forEach(function(k) {
+    document.getElementById('filter-' + k).classList.toggle('active', k === f);
+  });
   renderLeads();
 }
 
-async function runSearch() {
-  const trade = document.getElementById('trade').value.trim();
-  const location = document.getElementById('location').value.trim();
-  if (!trade || !location) return;
+function sortBy(key, rerender) {
+  if (rerender === undefined) rerender = true;
+  currentSort = key;
+  document.querySelectorAll('.sort-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('sort' + key.charAt(0).toUpperCase() + key.slice(1)).classList.add('active');
+  allLeads.sort(function(a, b) {
+    return key === 'reviews' ? b.reviewCount - a.reviewCount : key === 'rating' ? b.rating - a.rating : b.score - a.score;
+  });
+  if (rerender) renderLeads();
+}
 
-  const btn = document.getElementById('searchBtn');
+function getFiltered() {
+  if (currentFilter === 'pending') return allLeads.filter(function(l) { return !contactedSet[l.name]; });
+  if (currentFilter === 'done') return allLeads.filter(function(l) { return !!contactedSet[l.name]; });
+  return allLeads;
+}
+
+async function runSearch() {
+  var trade = document.getElementById('trade').value.trim();
+  var location = document.getElementById('location').value.trim();
+  if (!trade || !location) return;
+  var btn = document.getElementById('searchBtn');
   btn.disabled = true; btn.textContent = 'Searching...';
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('resultsWrap').style.display = 'none';
-  const statusBar = document.getElementById('statusBar');
-  statusBar.classList.add('show');
-  document.getElementById('statusText').textContent = `${trade} in ${location}`;
+  var sb = document.getElementById('statusBar');
+  sb.classList.add('show');
+  document.getElementById('statusText').textContent = trade + ' in ' + location;
+
+  await loadContacted();
 
   try {
-    const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(trade+' '+location+' UK')}&format=json&limit=1&countrycodes=gb`,{headers:{'Accept-Language':'en'}});
-    const geoData = await geoRes.json();
-    let lat = 52.48, lon = -1.89;
+    var geoRes = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(trade + ' ' + location + ' UK') + '&format=json&limit=1&countrycodes=gb', { headers: { 'Accept-Language': 'en' } });
+    var geoData = await geoRes.json();
+    var lat = 52.48, lon = -1.89;
     if (geoData && geoData[0]) { lat = parseFloat(geoData[0].lat); lon = parseFloat(geoData[0].lon); }
 
-    const q = `[out:json][timeout:25];(node["shop"](around:5000,${lat},${lon});node["amenity"](around:5000,${lat},${lon});node["craft"](around:5000,${lat},${lon});way["shop"](around:5000,${lat},${lon});way["amenity"](around:5000,${lat},${lon});way["craft"](around:5000,${lat},${lon}););out center 40;`;
-    const opRes = await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:q,headers:{'Content-Type':'application/x-www-form-urlencoded'}});
-    const opData = await opRes.json();
-    const elements = opData.elements || [];
-    const tradeKw = trade.toLowerCase().split(/\s+/);
-    let leads = []; const seen = new Set();
+    var q = '[out:json][timeout:25];(node["shop"](around:5000,' + lat + ',' + lon + ');node["amenity"](around:5000,' + lat + ',' + lon + ');node["craft"](around:5000,' + lat + ',' + lon + ');way["shop"](around:5000,' + lat + ',' + lon + ');way["amenity"](around:5000,' + lat + ',' + lon + ');way["craft"](around:5000,' + lat + ',' + lon + '););out center 40;';
+    var opRes = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: q, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+    var opData = await opRes.json();
+    var elements = opData.elements || [];
+    var tradeKw = trade.toLowerCase().split(/\s+/);
+    var leads = []; var seen = {};
 
-    elements.forEach(el => {
-      const tags = el.tags || {};
-      const name = tags.name;
-      if (!name || seen.has(name)) return;
-      const combined = (Object.values(tags).join(' ')+' '+Object.keys(tags).join(' ')).toLowerCase();
-      if (!tradeKw.some(kw => combined.includes(kw)) && elements.length > 5) return;
-      seen.add(name);
-      const hasWebsite = !!(tags.website || tags['contact:website'] || tags.url);
-      if (hasWebsite) return;
-      const reviewCount = Math.floor(Math.random()*180)+12;
-      const rating = parseFloat((3.9+Math.random()*1.0).toFixed(1));
-      leads.push({name, type:(tags.craft||tags.shop||tags.amenity||'business').replace(/_/g,' '), hasWebsite:false, address:location, reviewCount, rating, score:Math.round(reviewCount*0.5+rating*15+30)});
+    elements.forEach(function(el) {
+      var tags = el.tags || {}; var name = tags.name;
+      if (!name || seen[name]) return;
+      var combined = (Object.values(tags).join(' ') + ' ' + Object.keys(tags).join(' ')).toLowerCase();
+      if (!tradeKw.some(function(kw) { return combined.indexOf(kw) !== -1; }) && elements.length > 5) return;
+      seen[name] = true;
+      if (tags.website || tags['contact:website'] || tags.url) return;
+      var reviewCount = Math.floor(Math.random() * 180) + 12;
+      var rating = parseFloat((3.9 + Math.random() * 1.0).toFixed(1));
+      leads.push({ name: name, type: (tags.craft || tags.shop || tags.amenity || 'business').replace(/_/g, ' '), address: location, reviewCount: reviewCount, rating: rating, score: Math.round(reviewCount * 0.5 + rating * 15 + 30) });
     });
 
-    if (leads.length < 6) leads = leads.concat(generateFallbackLeads(trade, location, 12-leads.length));
-    if (leads.length === 0) leads = generateFallbackLeads(trade, location, 10);
+    if (leads.length < 6) leads = leads.concat(generateFallback(trade, location, 12 - leads.length));
+    if (!leads.length) leads = generateFallback(trade, location, 10);
     allLeads = leads;
   } catch(e) {
-    allLeads = generateFallbackLeads(trade, location, 10);
+    allLeads = generateFallback(trade, location, 10);
   }
 
   sortBy(currentSort, false);
   renderLeads();
-  statusBar.classList.remove('show');
+  sb.classList.remove('show');
   document.getElementById('resultsWrap').style.display = 'block';
   btn.disabled = false; btn.textContent = 'Search';
 }
 
-function generateFallbackLeads(trade, location, count) {
-  const tradeNames = {
-    plasterer:['A&B Plastering','City Plastering Services','ProFinish Plastering','Smooth Coat Plastering','J&S Plasters','Excel Rendering','Quality Plasters','TradeCraft Plastering','Premier Plaster Co','TopCoat Finishing','Midlands Plastering','Local Plaster Pros'],
-    barber:['Fade Masters','The Gents Cut','Sharp Cuts','Classic Barber Studio','The Fade House','Kings Barbers','Old School Barbers','The Clipper Room','Premier Cuts','Elite Barbers','Central Barbers','The Trim Shop'],
-    roofer:['TopLine Roofing','AllWeather Roofing','Apex Roof Co','Solid Roof Services','Crown Roofing','ProRoof Solutions','Eagle Roofing','Shield Roofing','Vertex Roofing','Summit Roofing','Heritage Roofing','FastFix Roofing'],
-    plumber:['QuickFlow Plumbing','AllPipes Ltd','Leak Stop Plumbing','TrustFlow Plumbers','First Fix Plumbing','Sure Flow Services','24/7 Plumbing Co','Premier Plumbing','FlowRight Plumbing','Citywide Plumbers','FastFix Plumbing','Local Plumbing Pros'],
-    electrician:['Bright Spark Electrics','PowerSafe Electrical','CircuitPro Electrics','Local Sparks','AllWire Electrical','SafeWire Services','CurrentFix Electrics','ProVolt Electrical','Citywide Electrics','Expert Sparks','FirstFix Electrics','Reliable Electrics'],
-    builder:['SolidBuild Co','ProBuild Services','FoundationFirst Builders','BuildRight Ltd','CraftBuild','TradeBuild Solutions','Premier Builders','Sterling Builds','Quality Builds Ltd','TrustBuild Co','LocalBuild Services','Expert Builders'],
-    decorator:['ProFinish Decorators','Fresh Coat Painting','ColorCraft Decorators','BrightWall Decorating','Premier Decorators','TrueCoat Painting','Expert Decorators','Quality Finish Decor','LocalPainters Pro','Ace Decorating','TopCoat Decorators','AllSurface Finishes']
+function generateFallback(trade, location, count) {
+  var map = {
+    plasterer: ['A&B Plastering','City Plastering Services','ProFinish Plastering','Smooth Coat Plastering','J&S Plasters','Excel Rendering','Quality Plasters','TradeCraft Plastering','Premier Plaster Co','TopCoat Finishing','Midlands Plastering','Local Plaster Pros'],
+    barber: ['Fade Masters','The Gents Cut','Sharp Cuts','Classic Barber Studio','The Fade House','Kings Barbers','Old School Barbers','The Clipper Room','Premier Cuts','Elite Barbers','Central Barbers','The Trim Shop'],
+    roofer: ['TopLine Roofing','AllWeather Roofing','Apex Roof Co','Solid Roof Services','Crown Roofing','ProRoof Solutions','Eagle Roofing','Shield Roofing','Vertex Roofing','Summit Roofing','Heritage Roofing','FastFix Roofing'],
+    plumber: ['QuickFlow Plumbing','AllPipes Ltd','Leak Stop Plumbing','TrustFlow Plumbers','First Fix Plumbing','Sure Flow Services','24/7 Plumbing Co','Premier Plumbing','FlowRight Plumbing','Citywide Plumbers','FastFix Plumbing','Local Plumbing Pros'],
+    electrician: ['Bright Spark Electrics','PowerSafe Electrical','CircuitPro Electrics','Local Sparks','AllWire Electrical','SafeWire Services','CurrentFix Electrics','ProVolt Electrical','Citywide Electrics','Expert Sparks','FirstFix Electrics','Reliable Electrics'],
+    builder: ['SolidBuild Co','ProBuild Services','FoundationFirst Builders','BuildRight Ltd','CraftBuild','TradeBuild Solutions','Premier Builders','Sterling Builds','Quality Builds Ltd','TrustBuild Co','LocalBuild Services','Expert Builders'],
+    decorator: ['ProFinish Decorators','Fresh Coat Painting','ColorCraft Decorators','BrightWall Decorating','Premier Decorators','TrueCoat Painting','Expert Decorators','Quality Finish Decor','LocalPainters Pro','Ace Decorating','TopCoat Decorators','AllSurface Finishes']
   };
-  const key = Object.keys(tradeNames).find(k => trade.toLowerCase().includes(k)) || 'plasterer';
-  const names = tradeNames[key] || tradeNames.plasterer;
-  const result = [];
-  for (let i = 0; i < Math.min(count, names.length); i++) {
-    const reviewCount = Math.floor(Math.random()*180)+12;
-    const rating = parseFloat((3.9+Math.random()*1.0).toFixed(1));
-    result.push({name:names[i], type:key, hasWebsite:false, address:location, reviewCount, rating, score:Math.round(reviewCount*0.5+rating*15+30)});
+  var key = Object.keys(map).find(function(k) { return trade.toLowerCase().indexOf(k) !== -1; }) || 'plasterer';
+  var names = map[key] || map.plasterer;
+  var result = [];
+  for (var i = 0; i < Math.min(count, names.length); i++) {
+    var reviewCount = Math.floor(Math.random() * 180) + 12;
+    var rating = parseFloat((3.9 + Math.random() * 1.0).toFixed(1));
+    result.push({ name: names[i], type: key, address: location, reviewCount: reviewCount, rating: rating, score: Math.round(reviewCount * 0.5 + rating * 15 + 30) });
   }
   return result;
 }
 
-function sortBy(key, rerender=true) {
-  currentSort = key;
-  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('sort'+key.charAt(0).toUpperCase()+key.slice(1)).classList.add('active');
-  allLeads.sort((a,b) => key==='reviews'?b.reviewCount-a.reviewCount:key==='rating'?b.rating-a.rating:b.score-a.score);
-  if (rerender) renderLeads();
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildMessage(lead) {
+  return "Hi there, hope you don't mind me reaching out — I noticed " + lead.name + " doesn't have a website and wanted to flag something.\n\nWhen someone hears about a local business these days, the first thing they do is Google it. Every customer that Googles your service and doesn't find you almost certainly finds a competitor instead — you could be losing enquiries every single week without even knowing it.\n\nSo I went ahead and built you one. It's fully ready to go — complete with a contact form, mobile support, and your " + lead.reviewCount + " Google reviews pulled in.\n\nHappy to send you the preview link so you can see it for yourself?";
 }
 
 function renderLeads() {
-  const contacted = loadContacted();
-  let filtered = allLeads;
-  if (currentFilter === 'pending') filtered = allLeads.filter(l => !contacted[l.name]);
-  if (currentFilter === 'done') filtered = allLeads.filter(l => !!contacted[l.name]);
+  var filtered = getFiltered();
+  var pending = allLeads.filter(function(l) { return !contactedSet[l.name]; }).length;
+  var done = allLeads.filter(function(l) { return !!contactedSet[l.name]; }).length;
+  document.getElementById('resultsCount').textContent = allLeads.length + ' leads — ' + pending + ' pending · ' + done + ' contacted';
 
-  const pendingCount = allLeads.filter(l => !contacted[l.name]).length;
-  const doneCount = allLeads.filter(l => !!contacted[l.name]).length;
-  document.getElementById('resultsCount').textContent = `${allLeads.length} leads — ${pendingCount} pending · ${doneCount} contacted`;
+  var maxScore = Math.max.apply(null, allLeads.map(function(l) { return l.score; }).concat([1]));
+  var maxRev = Math.max.apply(null, allLeads.map(function(l) { return l.reviewCount; }).concat([1]));
 
-  const maxScore = Math.max(...allLeads.map(l => l.score), 1);
-  const maxReviews = Math.max(...allLeads.map(l => l.reviewCount), 1);
+  if (!filtered.length) {
+    document.getElementById('leadsList').innerHTML = '<div class="empty"><div class="empty-icon">✓</div>No leads match this filter</div>';
+    return;
+  }
 
-  document.getElementById('leadsList').innerHTML = filtered.map((lead, i) => {
-    const done = !!contacted[lead.name];
-    const pct = Math.round((lead.score/maxScore)*100);
-    const rPct = Math.round((lead.reviewCount/maxReviews)*100);
-    const dateStr = done ? contacted[lead.name].date : '';
-    const accentFill = done ? '#333' : 'var(--accent)';
-    const accent2Fill = done ? '#333' : 'var(--accent2)';
-    return `<div class="lead-card${done?' contacted':''}" id="card-${i}">
-      <div class="lead-top">
-        <div class="lead-left">
-          <div class="check-wrap">
-            <div class="custom-check${done?' checked':''}" id="chk-${i}" onclick="toggleContacted(${i})" title="${done?'Mark as not contacted':'Mark as contacted'}"></div>
-          </div>
-          <div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span class="rank-num">#${i+1}</span>
-              <span class="lead-name">${lead.name}</span>
-            </div>
-            <div class="lead-type">${lead.type} · ${lead.address}</div>
-            ${done ? `<div class="contacted-stamp">messaged ${dateStr}</div>` : ''}
-          </div>
-        </div>
-        <div class="badge-row">
-          <span class="badge badge-reviews">${lead.reviewCount} reviews</span>
-          <span class="badge badge-rating">${lead.rating.toFixed(1)} ★</span>
-          ${done ? '<span class="badge badge-contacted">contacted</span>' : '<span class="badge badge-noweb">no website</span>'}
-        </div>
-      </div>
-      <div class="score-bar">
-        <span class="score-label">opportunity</span>
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${accentFill}"></div></div>
-        <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);min-width:28px;">${pct}</span>
-      </div>
-      <div class="score-bar">
-        <span class="score-label">review volume</span>
-        <div class="bar-track"><div class="bar-fill" style="width:${rPct}%;background:${accent2Fill}"></div></div>
-        <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);min-width:28px;">${rPct}</span>
-      </div>
-      <div class="lead-actions">
-        <button class="btn-msg btn-primary" onclick="toggleMsg(${i})">Write outreach message</button>
-        <button class="btn-msg btn-secondary" onclick="sendPrompt('Give me 3 alternative outreach angles for ${lead.name.replace(/'/g,"\\'")} — a ${lead.type} business with ${lead.reviewCount} Google reviews and no website')">More angles ↗</button>
-      </div>
-      <div class="msg-box" id="msg-${i}"></div>
-    </div>`;
-  }).join('') || '<div class="empty"><div class="empty-icon">✓</div>No leads match this filter</div>';
+  document.getElementById('leadsList').innerHTML = filtered.map(function(lead, i) {
+    var isDone = !!contactedSet[lead.name];
+    var pct = Math.round((lead.score / maxScore) * 100);
+    var rPct = Math.round((lead.reviewCount / maxRev) * 100);
+    var dateStr = '';
+    if (isDone && contactedSet[lead.name].contacted_at) {
+      dateStr = new Date(contactedSet[lead.name].contacted_at).toLocaleDateString('en-GB');
+    }
+    var barColor = isDone ? '#2a2a2a' : 'var(--accent)';
+    var bar2Color = isDone ? '#2a2a2a' : 'var(--accent2)';
 
-  updateContactedCount();
+    return '<div class="lead-card' + (isDone ? ' contacted' : '') + '" id="card-' + i + '">' +
+      '<div class="lead-top">' +
+        '<div class="lead-left">' +
+          '<div class="custom-check' + (isDone ? ' checked' : '') + '" id="chk-' + i + '" onclick="toggleContacted(' + i + ')"></div>' +
+          '<div>' +
+            '<div style="display:flex;align-items:center;gap:8px;"><span class="rank-num">#' + (i+1) + '</span><span class="lead-name">' + esc(lead.name) + '</span></div>' +
+            '<div class="lead-type">' + esc(lead.type) + ' · ' + esc(lead.address) + '</div>' +
+            (isDone ? '<div class="contacted-stamp">messaged ' + dateStr + '</div>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="badge-row">' +
+          '<span class="badge badge-reviews">' + lead.reviewCount + ' reviews</span>' +
+          '<span class="badge badge-rating">' + lead.rating.toFixed(1) + ' ★</span>' +
+          (isDone ? '<span class="badge badge-contacted">contacted</span>' : '<span class="badge badge-noweb">no website</span>') +
+        '</div>' +
+      '</div>' +
+      '<div class="score-bar"><span class="score-label">opportunity</span><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div><span style="font-size:11px;font-family:DM Mono,monospace;color:var(--muted);min-width:28px;">' + pct + '</span></div>' +
+      '<div class="score-bar"><span class="score-label">review volume</span><div class="bar-track"><div class="bar-fill" style="width:' + rPct + '%;background:' + bar2Color + '"></div></div><span style="font-size:11px;font-family:DM Mono,monospace;color:var(--muted);min-width:28px;">' + rPct + '</span></div>' +
+      '<div class="lead-actions">' +
+        '<button class="btn-msg btn-primary" onclick="toggleMsg(' + i + ')">Write outreach message</button>' +
+        '<button class="btn-msg btn-secondary" onclick="window.open(\'https://claude.ai\',\'_blank\')">More angles</button>' +
+      '</div>' +
+      '<div class="msg-box" id="msg-' + i + '"></div>' +
+    '</div>';
+  }).join('');
 }
 
 function toggleContacted(i) {
-  const leads = getCurrentFiltered();
-  const lead = leads[i];
+  var filtered = getFiltered();
+  var lead = filtered[i];
   if (!lead) return;
-  if (isContacted(lead.name)) {
+  if (contactedSet[lead.name]) {
     unmarkContacted(lead.name);
   } else {
     markContacted(lead.name, lead.address, lead.reviewCount);
   }
-  renderLeads();
-}
-
-function getCurrentFiltered() {
-  const contacted = loadContacted();
-  if (currentFilter === 'pending') return allLeads.filter(l => !contacted[l.name]);
-  if (currentFilter === 'done') return allLeads.filter(l => !!contacted[l.name]);
-  return allLeads;
 }
 
 function toggleMsg(i) {
-  const leads = getCurrentFiltered();
-  const lead = leads[i];
-  const box = document.getElementById(`msg-${i}`);
-  const btn = document.querySelector(`#card-${i} .btn-primary`);
+  var filtered = getFiltered();
+  var lead = filtered[i];
+  var box = document.getElementById('msg-' + i);
+  var btn = document.querySelector('#card-' + i + ' .btn-primary');
   if (!box || !lead) return;
   if (box.classList.contains('show')) {
     box.classList.remove('show');
     btn.textContent = 'Write outreach message';
     return;
   }
-  const msg = `Hi there, hope you don't mind me reaching out — I noticed ${lead.name} doesn't have a website and wanted to flag something.\n\nWhen someone hears about a local business these days, the first thing they do is Google it. Every customer that Googles your service and doesn't find you almost certainly finds a competitor instead — you could be losing enquiries every single week without even knowing it.\n\nSo I went ahead and built you one. It's fully ready to go — complete with a contact form, mobile support, and your ${lead.reviewCount} Google reviews pulled in.\n\nHappy to send you the preview link so you can see it for yourself?`;
-  box.innerHTML = msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') +
-    `<div class="copy-row"><span class="copy-hint">copy · then tick the checkbox once sent</span><button class="btn-copy" id="copy-${i}" onclick="copyMsg(${i}, \`${msg.replace(/`/g,'\\`')}\`)">Copy message</button></div>`;
+  var msg = buildMessage(lead);
+  box.innerHTML = esc(msg) + '<div class="copy-row"><span class="copy-hint">copy · then tick checkbox once sent</span><button class="btn-copy" id="copy-' + i + '" onclick="copyMsg(' + i + ')">Copy message</button></div>';
+  box._msg = msg;
   box.classList.add('show');
   btn.textContent = 'Hide message';
 }
 
-function copyMsg(i, msg) {
-  navigator.clipboard.writeText(msg).then(() => {
-    const btn = document.getElementById(`copy-${i}`);
+function copyMsg(i) {
+  var box = document.getElementById('msg-' + i);
+  if (!box || !box._msg) return;
+  navigator.clipboard.writeText(box._msg).then(function() {
+    var btn = document.getElementById('copy-' + i);
     if (!btn) return;
     btn.textContent = 'Copied!';
     btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = 'Copy message'; btn.classList.remove('copied'); }, 2000);
+    setTimeout(function() { btn.textContent = 'Copy message'; btn.classList.remove('copied'); }, 2000);
   });
 }
 
-updateContactedCount();
+loadContacted();
 </script>
+</body>
+</html>
