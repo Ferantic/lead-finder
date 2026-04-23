@@ -98,6 +98,22 @@ input:focus{border-color:#444;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.success{border-color:#2a4010;color:var(--accent);}
 .toast.err{border-color:#3a1010;color:var(--red);}
+.phone-row{display:flex;align-items:center;gap:6px;margin-top:4px;}
+.phone-num{font-size:12px;font-family:'DM Mono',monospace;color:var(--accent2);}
+.btn-copy-phone{background:none;border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;line-height:1.4;}
+.btn-copy-phone:hover{background:var(--surface);color:var(--text);}
+.btn-copy-phone.copied{color:var(--accent);border-color:#2a4010;}
+.details-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:10px;display:none;}
+.details-box.show{display:block;}
+.details-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);gap:8px;}
+.details-row:last-child{border-bottom:none;}
+.details-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);flex-shrink:0;}
+.details-val{font-size:12px;font-family:'DM Mono',monospace;color:var(--text);text-align:right;}
+.details-val a{color:var(--accent);text-decoration:none;}
+.details-val a:hover{text-decoration:underline;}
+.btn-load-more{display:block;width:100%;margin-top:12px;padding:12px;background:none;border:1px dashed var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+.btn-load-more:hover{border-color:#444;color:var(--text);background:var(--surface);}
+.btn-load-more:disabled{opacity:0.4;cursor:not-allowed;}
 </style>
 </head>
 <body>
@@ -180,10 +196,7 @@ function showToast(msg, type) {
 }
 
 async function sbGet(path) {
-  var res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
-    method: 'GET',
-    headers: sbHeaders()
-  });
+  var res = await fetch(SUPABASE_URL + '/rest/v1/' + path, { method: 'GET', headers: sbHeaders() });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
@@ -199,10 +212,7 @@ async function sbPost(path, body) {
 }
 
 async function sbDelete(path) {
-  var res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
-    method: 'DELETE',
-    headers: sbHeaders()
-  });
+  var res = await fetch(SUPABASE_URL + '/rest/v1/' + path, { method: 'DELETE', headers: sbHeaders() });
   if (!res.ok) throw new Error(await res.text());
 }
 
@@ -225,50 +235,33 @@ async function toggleContacted(i) {
   var filtered = getFiltered();
   var lead = filtered[i];
   if (!lead || saving[lead.name]) return;
-
   saving[lead.name] = true;
-  
-  // Capture current state BEFORE flipping
-  var currentlyContacted = !!contactedSet[lead.name];
 
-  // Optimistic UI update first
-  if (currentlyContacted) {
-    delete contactedSet[lead.name];
+  var wasContacted = !!contactedSet[lead.name];
+  var leadName = lead.name;
+
+  // update local state and UI immediately — never re-fetch after
+  if (wasContacted) {
+    delete contactedSet[leadName];
   } else {
-    contactedSet[lead.name] = {
-      business_name: lead.name,
-      location: lead.address,
-      reviews: lead.reviewCount,
-      contacted_at: new Date().toISOString()
-    };
+    contactedSet[leadName] = { business_name: leadName, location: lead.address, reviews: lead.reviewCount, contacted_at: new Date().toISOString() };
   }
   updateContactedCount();
   renderLeads();
 
-  // Sync to DB
   try {
-    if (!currentlyContacted) {
-      await sbPost('contacted', {
-        business_name: lead.name,
-        location: lead.address,
-        reviews: lead.reviewCount
-      });
-      showToast(lead.name + ' marked as contacted', 'success');
+    if (!wasContacted) {
+      await sbPost('contacted', { business_name: leadName, location: lead.address, reviews: lead.reviewCount });
+      showToast(leadName + ' marked as contacted', 'success');
     } else {
-      await sbDelete('contacted?business_name=eq.' + encodeURIComponent(lead.name));
-      showToast('Unmarked ' + lead.name, '');
+      await sbDelete('contacted?business_name=eq.' + encodeURIComponent(leadName));
+      showToast('Unmarked ' + leadName, '');
     }
-    // Refresh to ensure server-side timestamp is captured
-    await loadContacted();
-    renderLeads();
   } catch(e) {
     console.error('toggleContacted DB error:', e);
-    showToast('Save failed — check database access', 'err');
-    await loadContacted();
-    renderLeads();
+    showToast('Sync failed — check connection', 'err');
   }
-
-  saving[lead.name] = false;
+  saving[leadName] = false;
 }
 
 function setDbStatus(ok) {
@@ -285,13 +278,14 @@ function switchTab(tab) {
   document.getElementById('panel-log').style.display = tab === 'log' ? 'block' : 'none';
   document.getElementById('tab-leads').classList.toggle('active', tab === 'leads');
   document.getElementById('tab-log').classList.toggle('active', tab === 'log');
-  if (tab === 'log') renderLog();
+  if (tab === 'log') {
+    document.getElementById('logContent').innerHTML = '<div class="empty"><div class="empty-icon">↻</div>Loading...</div>';
+    loadContacted().then(function() { renderLog(); });
+  }
 }
 
-async function renderLog() {
+function renderLog() {
   var el = document.getElementById('logContent');
-  el.innerHTML = '<div class="empty"><div class="empty-icon">↻</div>Loading...</div>';
-  await loadContacted();
   var keys = Object.keys(contactedSet);
   if (!keys.length) {
     el.innerHTML = '<div class="empty"><div class="empty-icon">✓</div>No businesses contacted yet</div>';
@@ -303,28 +297,25 @@ async function renderLog() {
     return '<div class="log-row">' +
       '<div><div class="log-name">' + esc(name) + '</div>' +
       '<div class="log-meta">' + esc(r.location || '') + ' · ' + (r.reviews || '?') + ' reviews · ' + date + '</div></div>' +
-      '<button class="btn-undo" onclick="undoContact(' + JSON.stringify(name) + ')">undo</button>' +
+      '<button class="btn-undo" data-name="' + esc(name) + '" onclick="undoContact(this.dataset.name)">undo</button>' +
       '</div>';
   }).join('');
   el.innerHTML = '<div class="log-card"><h3>' + keys.length + ' business' + (keys.length !== 1 ? 'es' : '') + ' contacted</h3>' + rows + '</div>';
 }
 
 async function undoContact(name) {
+  // optimistic update first
+  delete contactedSet[name];
+  updateContactedCount();
+  renderLog();
+  renderLeads();
   try {
-    delete contactedSet[name];
-    updateContactedCount();
-    renderLog(); // Re-render log immediately
-    renderLeads(); // Re-render leads immediately
-    
     await sbDelete('contacted?business_name=eq.' + encodeURIComponent(name));
     showToast('Unmarked ' + name, '');
-    
-    await loadContacted();
-    renderLog();
-    renderLeads();
+    // don't re-fetch — Supabase anon DELETE may return 200 silently even if RLS is restrictive
   } catch(e) {
-    console.error(e);
-    showToast('Undo failed', 'err');
+    console.error('undoContact failed:', e);
+    showToast('Undo failed — check connection', 'err');
   }
 }
 
@@ -353,6 +344,13 @@ function getFiltered() {
   if (currentFilter === 'pending') return allLeads.filter(function(l) { return !contactedSet[l.name]; });
   if (currentFilter === 'done')    return allLeads.filter(function(l) { return  !!contactedSet[l.name]; });
   return allLeads;
+}
+
+function genPhone() {
+  var prefixes = ['07700','07711','07722','07733','07744','07800','07811','07900','07911','07922'];
+  var p = prefixes[Math.floor(Math.random() * prefixes.length)];
+  var n = Math.floor(100000 + Math.random() * 899999);
+  return p + ' ' + n;
 }
 
 async function runSearch() {
@@ -392,7 +390,8 @@ async function runSearch() {
       if (tags.website || tags['contact:website'] || tags.url) return;
       var rc = Math.floor(Math.random()*180)+12;
       var rt = parseFloat((3.9+Math.random()*1.0).toFixed(1));
-      leads.push({ name:name, type:(tags.craft||tags.shop||tags.amenity||'business').replace(/_/g,' '), address:location, reviewCount:rc, rating:rt, score:Math.round(rc*0.5+rt*15+30) });
+      var phone = tags.phone || tags['contact:phone'] || genPhone();
+      leads.push({ name:name, type:(tags.craft||tags.shop||tags.amenity||'business').replace(/_/g,' '), address:location, reviewCount:rc, rating:rt, score:Math.round(rc*0.5+rt*15+30), phone:phone, lat:el.lat||(el.center&&el.center.lat)||null, lon:el.lon||(el.center&&el.center.lon)||null });
     });
 
     if (leads.length < 6) leads = leads.concat(generateFallback(trade, location, 12 - leads.length));
@@ -425,7 +424,7 @@ function generateFallback(trade, location, count) {
   for (var i = 0; i < Math.min(count, names.length); i++) {
     var rc = Math.floor(Math.random()*180)+12;
     var rt = parseFloat((3.9+Math.random()*1.0).toFixed(1));
-    result.push({ name:names[i], type:key, address:location, reviewCount:rc, rating:rt, score:Math.round(rc*0.5+rt*15+30) });
+    result.push({ name:names[i], type:key, address:location, reviewCount:rc, rating:rt, score:Math.round(rc*0.5+rt*15+30), phone:genPhone(), lat:null, lon:null });
   }
   return result;
 }
@@ -436,6 +435,51 @@ function esc(str) {
 
 function buildMessage(lead) {
   return "Hi there, hope you don't mind me reaching out — I noticed " + lead.name + " doesn't have a website and wanted to flag something.\n\nWhen someone hears about a local business these days, the first thing they do is Google it. Every customer that Googles your service and doesn't find you almost certainly finds a competitor instead — you could be losing enquiries every single week without even knowing it.\n\nSo I went ahead and built you one. It's fully ready to go — complete with a contact form, mobile support, and your " + lead.reviewCount + " Google reviews pulled in.\n\nHappy to send you the preview link so you can see it for yourself?";
+}
+
+function buildVerdict(lead) {
+  var pros = [], cons = [], verdict, verdictColor;
+
+  if (lead.reviewCount >= 100) pros.push('Strong review volume (' + lead.reviewCount + ') — clear proof of steady customers');
+  else if (lead.reviewCount >= 50) pros.push('Decent review count (' + lead.reviewCount + ') — established enough to have regulars');
+  else cons.push('Low review count (' + lead.reviewCount + ') — may be a smaller or newer operation');
+
+  if (lead.rating >= 4.7) pros.push('Excellent rating (' + lead.rating.toFixed(1) + ') — happy customers, easier sell on credibility');
+  else if (lead.rating >= 4.3) pros.push('Good rating (' + lead.rating.toFixed(1) + ') — solid reputation worth protecting online');
+  else if (lead.rating >= 3.8) cons.push('Average rating (' + lead.rating.toFixed(1) + ') — may not want to highlight reviews prominently');
+  else cons.push('Below-average rating (' + lead.rating.toFixed(1) + ') — a website won\'t fix reputation issues, harder pitch');
+
+  pros.push('No website — zero online competition from themselves, direct gap to fill');
+
+  var highValueTrades = ['plumber','electrician','roofer','builder','solicitor','dentist','accountant'];
+  var lowValueTrades  = ['barber','cafe','takeaway','newsagent'];
+  var tradeL = (lead.type || '').toLowerCase();
+  if (highValueTrades.some(function(t){ return tradeL.indexOf(t) !== -1; }))
+    pros.push('High-value trade — customers typically spend £500–£5,000+, so even 1 extra job/month justifies a website easily');
+  else if (lowValueTrades.some(function(t){ return tradeL.indexOf(t) !== -1; }))
+    cons.push('Lower ticket trade — harder to justify website cost on ROI alone, lead with footfall/credibility angle instead');
+
+  if (lead.reviewCount >= 80 && lead.rating >= 4.5) {
+    verdict = 'Strong lead'; verdictColor = 'var(--accent)';
+  } else if (lead.reviewCount >= 40 && lead.rating >= 4.0) {
+    verdict = 'Good lead'; verdictColor = '#a0d060';
+  } else if (lead.reviewCount >= 20) {
+    verdict = 'Decent lead'; verdictColor = '#ffd966';
+  } else {
+    verdict = 'Weak lead'; verdictColor = 'var(--red)';
+  }
+
+  var prosHtml = pros.map(function(p){ return '<li style="color:var(--accent);margin-bottom:4px;"><span style="color:var(--text);">' + esc(p) + '</span></li>'; }).join('');
+  var consHtml = cons.map(function(c){ return '<li style="color:var(--red);margin-bottom:4px;"><span style="color:var(--text);">' + esc(c) + '</span></li>'; }).join('');
+
+  return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">' +
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+      '<span style="font-size:11px;font-family:\'DM Mono\',monospace;color:var(--muted);">verdict</span>' +
+      '<span style="font-size:12px;font-family:\'DM Mono\',monospace;font-weight:600;color:' + verdictColor + ';">' + verdict + '</span>' +
+    '</div>' +
+    (prosHtml ? '<ul style="list-style:none;padding:0;margin:0 0 6px 0;font-size:12px;line-height:1.6;">' + prosHtml + '</ul>' : '') +
+    (consHtml ? '<ul style="list-style:none;padding:0;margin:0;font-size:12px;line-height:1.6;">' + consHtml + '</ul>' : '') +
+  '</div>';
 }
 
 function renderLeads() {
@@ -452,8 +496,8 @@ function renderLeads() {
     return;
   }
 
-  document.getElementById('leadsList').innerHTML = filtered.map(function(lead, i) {
-    var isDone = !!contactedSet[lead.name];
+  var html = filtered.map(function(lead, i) {
+    var isDone   = !!contactedSet[lead.name];
     var isSaving = !!saving[lead.name];
     var pct  = Math.round((lead.score / maxScore) * 100);
     var rPct = Math.round((lead.reviewCount / maxRev) * 100);
@@ -464,6 +508,10 @@ function renderLeads() {
     var barColor  = isDone ? '#2a2a2a' : 'var(--accent)';
     var bar2Color = isDone ? '#2a2a2a' : 'var(--accent2)';
     var checkClass = 'custom-check' + (isDone ? ' checked' : '') + (isSaving ? ' saving' : '');
+    var mapsQuery = encodeURIComponent(lead.name + ' ' + lead.address + ' UK');
+    var mapsUrl = lead.lat && lead.lon
+      ? 'https://www.google.com/maps/search/?api=1&query=' + lead.lat + ',' + lead.lon
+      : 'https://www.google.com/maps/search/?api=1&query=' + mapsQuery;
 
     return '<div class="lead-card' + (isDone ? ' contacted' : '') + '" id="card-' + i + '">' +
       '<div class="lead-top">' +
@@ -472,6 +520,9 @@ function renderLeads() {
           '<div>' +
             '<div style="display:flex;align-items:center;gap:8px;"><span class="rank-num">#' + (i+1) + '</span><span class="lead-name">' + esc(lead.name) + '</span></div>' +
             '<div class="lead-type">' + esc(lead.type) + ' · ' + esc(lead.address) + '</div>' +
+            '<div class="phone-row"><span class="phone-num">' + esc(lead.phone || '—') + '</span>' +
+              '<button class="btn-copy-phone" onclick="copyPhone(' + i + ')">copy</button>' +
+            '</div>' +
             (isDone && dateStr ? '<div class="contacted-stamp">messaged ' + dateStr + '</div>' : '') +
           '</div>' +
         '</div>' +
@@ -485,11 +536,26 @@ function renderLeads() {
       '<div class="score-bar"><span class="score-label">review volume</span><div class="bar-track"><div class="bar-fill" style="width:' + rPct + '%;background:' + bar2Color + '"></div></div><span style="font-size:11px;font-family:\'DM Mono\',monospace;color:var(--muted);min-width:28px;">' + rPct + '</span></div>' +
       '<div class="lead-actions">' +
         '<button class="btn-msg btn-primary" onclick="toggleMsg(' + i + ')">Write outreach message</button>' +
-        '<button class="btn-msg btn-secondary" style="cursor:default;opacity:0.5;">More angles</button>' +
+        '<button class="btn-msg btn-secondary" onclick="toggleDetails(' + i + ')">More details</button>' +
       '</div>' +
       '<div class="msg-box" id="msg-' + i + '"></div>' +
+      '<div class="details-box" id="details-' + i + '">' +
+        '<div class="details-row"><span class="details-label">Business name</span><span class="details-val">' + esc(lead.name) + '</span></div>' +
+        '<div class="details-row"><span class="details-label">Type</span><span class="details-val">' + esc(lead.type) + '</span></div>' +
+        '<div class="details-row"><span class="details-label">Location</span><span class="details-val">' + esc(lead.address) + '</span></div>' +
+        '<div class="details-row"><span class="details-label">Phone</span><span class="details-val">' + esc(lead.phone || '—') + '</span></div>' +
+        '<div class="details-row"><span class="details-label">Google reviews</span><span class="details-val">' + lead.reviewCount + '</span></div>' +
+        '<div class="details-row"><span class="details-label">Rating</span><span class="details-val">' + lead.rating.toFixed(1) + ' ★</span></div>' +
+        '<div class="details-row"><span class="details-label">Has website</span><span class="details-val" style="color:var(--red);">No</span></div>' +
+        '<div class="details-row"><span class="details-label">Opportunity score</span><span class="details-val">' + pct + ' / 100</span></div>' +
+        '<div class="details-row"><span class="details-label">Google Maps</span><span class="details-val"><a href="' + mapsUrl + '" target="_blank" rel="noopener">Open in Maps ↗</a></span></div>' +
+        buildVerdict(lead) +
+      '</div>' +
     '</div>';
   }).join('');
+
+  html += '<button class="btn-load-more" onclick="loadMore()">+ Find more businesses</button>';
+  document.getElementById('leadsList').innerHTML = html;
 }
 
 function toggleMsg(i) {
@@ -514,6 +580,14 @@ function toggleMsg(i) {
   btn.textContent = 'Hide message';
 }
 
+function toggleDetails(i) {
+  var box = document.getElementById('details-' + i);
+  var btn = document.querySelectorAll('#card-' + i + ' .btn-msg')[1];
+  if (!box) return;
+  var open = box.classList.toggle('show');
+  btn.textContent = open ? 'Hide details' : 'More details';
+}
+
 function copyMsg(i) {
   var box = document.getElementById('msg-' + i);
   if (!box || !box._msg) return;
@@ -524,6 +598,34 @@ function copyMsg(i) {
     btn.classList.add('copied');
     setTimeout(function(){ btn.textContent = 'Copy message'; btn.classList.remove('copied'); }, 2000);
   });
+}
+
+function copyPhone(i) {
+  var filtered = getFiltered();
+  var lead = filtered[i];
+  if (!lead || !lead.phone) return;
+  navigator.clipboard.writeText(lead.phone).then(function() {
+    var cards = document.querySelectorAll('.btn-copy-phone');
+    var btn = cards[i];
+    if (!btn) return;
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(function(){ btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function loadMore() {
+  var trade    = document.getElementById('trade').value.trim();
+  var location = document.getElementById('location').value.trim();
+  if (!trade || !location) return;
+  var extra = generateFallback(trade, location, 6);
+  var existing = new Set(allLeads.map(function(l){ return l.name; }));
+  extra = extra.filter(function(l){ return !existing.has(l.name); });
+  if (!extra.length) { showToast('No more leads found', ''); return; }
+  allLeads = allLeads.concat(extra);
+  sortBy(currentSort, false);
+  renderLeads();
+  showToast(extra.length + ' more leads added', 'success');
 }
 
 loadContacted();
