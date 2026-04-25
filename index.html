@@ -521,7 +521,7 @@ function renderLeads() {
             '<div style="display:flex;align-items:center;gap:8px;"><span class="rank-num">#' + (i+1) + '</span><span class="lead-name">' + esc(lead.name) + '</span></div>' +
             '<div class="lead-type">' + esc(lead.type) + ' · ' + esc(lead.address) + '</div>' +
             '<div class="phone-row"><span class="phone-num">' + esc(lead.phone || '—') + '</span>' +
-              '<button class="btn-copy-phone" onclick="copyPhone(' + i + ')">copy</button>' +
+              '<button class="btn-copy-phone" data-name="' + esc(lead.name) + '" onclick="copyPhone(this)">copy</button>' +
             '</div>' +
             (isDone && dateStr ? '<div class="contacted-stamp">messaged ' + dateStr + '</div>' : '') +
           '</div>' +
@@ -600,13 +600,11 @@ function copyMsg(i) {
   });
 }
 
-function copyPhone(i) {
-  var filtered = getFiltered();
-  var lead = filtered[i];
+function copyPhone(btn) {
+  var name = btn.getAttribute('data-name');
+  var lead = allLeads.find(function(l) { return l.name === name; });
   if (!lead || !lead.phone) return;
   navigator.clipboard.writeText(lead.phone).then(function() {
-    var btn = document.querySelector('#card-' + i + ' .btn-copy-phone');
-    if (!btn) return;
     btn.textContent = 'copied!';
     btn.classList.add('copied');
     setTimeout(function(){ btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
