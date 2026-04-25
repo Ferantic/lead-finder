@@ -21,7 +21,7 @@ body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-he
 .db-dot{width:7px;height:7px;border-radius:50%;background:#333;transition:background 0.3s;}
 .db-dot.connected{background:var(--accent);}
 .db-dot.error{background:var(--red);}
-.contacted-badge{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.contacted-badge{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;}
 .contacted-badge:hover{border-color:#333;color:var(--text);}
 .contacted-badge b{color:var(--accent);}
 .search-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:16px;}
@@ -29,7 +29,7 @@ body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-he
 .field label{display:block;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:6px;letter-spacing:0.5px;text-transform:uppercase;}
 input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'Syne',sans-serif;outline:none;transition:border 0.2s;}
 input:focus{border-color:#444;}
-.btn-search{align-self:flex-end;padding:10px 20px;background:var(--accent);color:#0a0a0a;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity 0.15s;}
+.btn-search{align-self:flex-end;padding:10px 20px;background:var(--accent);color:#0a0a0a;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
 .btn-search:hover{opacity:0.85;}
 .btn-search:disabled{opacity:0.4;cursor:not-allowed;}
 .filter-row{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
@@ -47,7 +47,7 @@ input:focus{border-color:#444;}
 .lead-card.contacted{opacity:0.42;}
 .lead-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;}
 .lead-left{display:flex;align-items:flex-start;gap:10px;}
-.custom-check{width:18px;height:18px;border:1.5px solid #444;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;background:transparent;margin-top:2px;user-select:none;}
+.custom-check{width:18px;height:18px;border:1.5px solid #444;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;background:transparent;}
 .custom-check:hover{border-color:#888;}
 .custom-check.checked{background:var(--accent);border-color:var(--accent);}
 .custom-check.checked::after{content:'';display:block;width:5px;height:9px;border:2px solid #0a0a0a;border-top:none;border-left:none;transform:rotate(45deg);margin-top:-2px;}
@@ -94,13 +94,13 @@ input:focus{border-color:#444;}
 .log-meta{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:2px;}
 .btn-undo{background:none;border:1px solid var(--border);border-radius:5px;padding:3px 10px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;flex-shrink:0;transition:all 0.15s;}
 .btn-undo:hover{color:var(--red);border-color:var(--red);}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 18px;font-size:12px;font-family:'DM Mono',monospace;color:var(--text);opacity:0;transition:all 0.25s;pointer-events:none;z-index:999;white-space:nowrap;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 18px;font-size:12px;font-family:'DM Mono',monospace;opacity:0;transition:opacity 0.3s, transform 0.3s;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.success{border-color:#2a4010;color:var(--accent);}
 .toast.err{border-color:#3a1010;color:var(--red);}
 .phone-row{display:flex;align-items:center;gap:6px;margin-top:4px;}
 .phone-num{font-size:12px;font-family:'DM Mono',monospace;color:var(--accent2);}
-.btn-copy-phone{background:none;border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;line-height:1.4;}
+.btn-copy-phone{background:none;border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;line-height:1;}
 .btn-copy-phone:hover{background:var(--surface);color:var(--text);}
 .btn-copy-phone.copied{color:var(--accent);border-color:#2a4010;}
 .details-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:10px;display:none;}
@@ -111,7 +111,7 @@ input:focus{border-color:#444;}
 .details-val{font-size:12px;font-family:'DM Mono',monospace;color:var(--text);text-align:right;}
 .details-val a{color:var(--accent);text-decoration:none;}
 .details-val a:hover{text-decoration:underline;}
-.btn-load-more{display:block;width:100%;margin-top:12px;padding:12px;background:none;border:1px dashed var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+.btn-load-more{display:block;width:100%;margin-top:12px;padding:12px;background:none;border:1px dashed var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);cursor:pointer;transition:all 0.15s;}
 .btn-load-more:hover{border-color:#444;color:var(--text);background:var(--surface);}
 .btn-load-more:disabled{opacity:0.4;cursor:not-allowed;}
 </style>
@@ -121,7 +121,7 @@ input:focus{border-color:#444;}
   <div class="header">
     <div>
       <h1>Lead finder</h1>
-      <p>// shared across all devices via supabase</p>
+      <p>// Real businesses from OpenStreetMap only</p>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
       <div class="db-status"><div class="db-dot" id="dbDot"></div><span id="dbLabel">connecting...</span></div>
@@ -169,7 +169,7 @@ input:focus{border-color:#444;}
 
 <script>
 var SUPABASE_URL = 'https://qbyvpbziiyxpshohmdlj.supabase.co';
-var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFieXZwYnppaXl4cHNob2htZGxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzQ3NDgsImV4cCI6MjA5MjQ1MDc0OH0.ircbHei7Zhmb6SJnVT1BTA9M2LfDKIhFWQApB53IhpA';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFieXZwYnppaXl4cHNob2htZGxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzQ3NDgsImV4cCI6MjA5MjQ1MDc0OH0.ircbHei7Zhmb6SJ6cTXxVJkc7jG_p0J8xZ_t0i-CKPE';
 
 var allLeads = [];
 var contactedSet = {};
@@ -240,7 +240,6 @@ async function toggleContacted(i) {
   var wasContacted = !!contactedSet[lead.name];
   var leadName = lead.name;
 
-  // update local state and UI immediately — never re-fetch after
   if (wasContacted) {
     delete contactedSet[leadName];
   } else {
@@ -304,7 +303,6 @@ function renderLog() {
 }
 
 async function undoContact(name) {
-  // optimistic update first
   delete contactedSet[name];
   updateContactedCount();
   renderLog();
@@ -312,7 +310,6 @@ async function undoContact(name) {
   try {
     await sbDelete('contacted?business_name=eq.' + encodeURIComponent(name));
     showToast('Unmarked ' + name, '');
-    // don't re-fetch — Supabase anon DELETE may return 200 silently even if RLS is restrictive
   } catch(e) {
     console.error('undoContact failed:', e);
     showToast('Undo failed — check connection', 'err');
@@ -346,13 +343,6 @@ function getFiltered() {
   return allLeads;
 }
 
-function genPhone() {
-  var prefixes = ['07700','07711','07722','07733','07744','07800','07811','07900','07911','07922'];
-  var p = prefixes[Math.floor(Math.random() * prefixes.length)];
-  var n = Math.floor(100000 + Math.random() * 899999);
-  return p + ' ' + n;
-}
-
 async function runSearch() {
   var trade    = document.getElementById('trade').value.trim();
   var location = document.getElementById('location').value.trim();
@@ -369,12 +359,12 @@ async function runSearch() {
   await loadContacted();
 
   try {
-    var geoRes  = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(trade + ' ' + location + ' UK') + '&format=json&limit=1&countrycodes=gb', { headers: {'Accept-Language':'en'} });
+    var geoRes  = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(trade + ' ' + location + ' UK') + '&format=json&limit=1&countrycodes=gb', { headers: {'Accept-Language': 'en'} });
     var geoData = await geoRes.json();
     var lat = 52.48, lon = -1.89;
     if (geoData && geoData[0]) { lat = parseFloat(geoData[0].lat); lon = parseFloat(geoData[0].lon); }
 
-    var q = '[out:json][timeout:25];(node["shop"](around:5000,'+lat+','+lon+');node["amenity"](around:5000,'+lat+','+lon+');node["craft"](around:5000,'+lat+','+lon+');way["shop"](around:5000,'+lat+','+lon+');way["amenity"](around:5000,'+lat+','+lon+');way["craft"](around:5000,'+lat+','+lon+'););out center 40;';
+    var q = '[out:json][timeout:25];(node["shop"](around:5000,'+lat+','+lon+');node["amenity"](around:5000,'+lat+','+lon+');node["craft"](around:5000,'+lat+','+lon+');way["shop"](around:5000,'+lat+','+lon+');way["amenity"](around:5000,'+lat+','+lon+');way["craft"](around:5000,'+lat+','+lon+'););out center;';
     var opRes   = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:q, headers:{'Content-Type':'application/x-www-form-urlencoded'} });
     var opData  = await opRes.json();
     var elements = opData.elements || [];
@@ -390,15 +380,24 @@ async function runSearch() {
       if (tags.website || tags['contact:website'] || tags.url) return;
       var rc = Math.floor(Math.random()*180)+12;
       var rt = parseFloat((3.9+Math.random()*1.0).toFixed(1));
-      var phone = tags.phone || tags['contact:phone'] || genPhone();
-      leads.push({ name:name, type:(tags.craft||tags.shop||tags.amenity||'business').replace(/_/g,' '), address:location, reviewCount:rc, rating:rt, score:Math.round(rc*0.5+rt*15+30), phone:phone, lat:el.lat||(el.center&&el.center.lat)||null, lon:el.lon||(el.center&&el.center.lon)||null });
+      var phone = tags.phone || tags['contact:phone'] || '';
+      leads.push({ name:name, type:(tags.craft||tags.shop||tags.amenity||'business').replace(/_/g,' '), address:location, reviewCount:rc, rating:rt, score:Math.round(rc*0.5+rt*15+30), phone:phone, lat:el.lat||el.center?.lat, lon:el.lon||el.center?.lon });
     });
 
-    if (leads.length < 6) leads = leads.concat(generateFallback(trade, location, 12 - leads.length));
-    if (!leads.length)     leads = generateFallback(trade, location, 10);
+    if (!leads.length) {
+      showToast('No real businesses found for this search. Try different keywords or location.', 'err');
+      sb.classList.remove('show');
+      btn.disabled = false; btn.textContent = 'Search';
+      return;
+    }
+
     allLeads = leads;
   } catch(e) {
-    allLeads = generateFallback(trade, location, 10);
+    console.error('Search error:', e);
+    showToast('Search failed. Check your internet connection.', 'err');
+    sb.classList.remove('show');
+    btn.disabled = false; btn.textContent = 'Search';
+    return;
   }
 
   sortBy(currentSort, false);
@@ -408,33 +407,12 @@ async function runSearch() {
   btn.disabled = false; btn.textContent = 'Search';
 }
 
-function generateFallback(trade, location, count) {
-  var map = {
-    plasterer:   ['A&B Plastering','City Plastering Services','ProFinish Plastering','Smooth Coat Plastering','J&S Plasters','Excel Rendering','Quality Plasters','TradeCraft Plastering','Premier Plaster Co','TopCoat Finishing','Midlands Plastering','Local Plaster Pros'],
-    barber:      ['Fade Masters','The Gents Cut','Sharp Cuts','Classic Barber Studio','The Fade House','Kings Barbers','Old School Barbers','The Clipper Room','Premier Cuts','Elite Barbers','Central Barbers','The Trim Shop'],
-    roofer:      ['TopLine Roofing','AllWeather Roofing','Apex Roof Co','Solid Roof Services','Crown Roofing','ProRoof Solutions','Eagle Roofing','Shield Roofing','Vertex Roofing','Summit Roofing','Heritage Roofing','FastFix Roofing'],
-    plumber:     ['QuickFlow Plumbing','AllPipes Ltd','Leak Stop Plumbing','TrustFlow Plumbers','First Fix Plumbing','Sure Flow Services','24/7 Plumbing Co','Premier Plumbing','FlowRight Plumbing','Citywide Plumbers','FastFix Plumbing','Local Plumbing Pros'],
-    electrician: ['Bright Spark Electrics','PowerSafe Electrical','CircuitPro Electrics','Local Sparks','AllWire Electrical','SafeWire Services','CurrentFix Electrics','ProVolt Electrical','Citywide Electrics','Expert Sparks','FirstFix Electrics','Reliable Electrics'],
-    builder:     ['SolidBuild Co','ProBuild Services','FoundationFirst Builders','BuildRight Ltd','CraftBuild','TradeBuild Solutions','Premier Builders','Sterling Builds','Quality Builds Ltd','TrustBuild Co','LocalBuild Services','Expert Builders'],
-    decorator:   ['ProFinish Decorators','Fresh Coat Painting','ColorCraft Decorators','BrightWall Decorating','Premier Decorators','TrueCoat Painting','Expert Decorators','Quality Finish Decor','LocalPainters Pro','Ace Decorating','TopCoat Decorators','AllSurface Finishes']
-  };
-  var key   = Object.keys(map).find(function(k){ return trade.toLowerCase().indexOf(k) !== -1; }) || 'plasterer';
-  var names = map[key] || map.plasterer;
-  var result = [];
-  for (var i = 0; i < Math.min(count, names.length); i++) {
-    var rc = Math.floor(Math.random()*180)+12;
-    var rt = parseFloat((3.9+Math.random()*1.0).toFixed(1));
-    result.push({ name:names[i], type:key, address:location, reviewCount:rc, rating:rt, score:Math.round(rc*0.5+rt*15+30), phone:genPhone(), lat:null, lon:null });
-  }
-  return result;
-}
-
 function esc(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function buildMessage(lead) {
-  return "Hi there, hope you don't mind me reaching out — I noticed " + lead.name + " doesn't have a website and wanted to flag something.\n\nWhen someone hears about a local business these days, the first thing they do is Google it. Every customer that Googles your service and doesn't find you almost certainly finds a competitor instead — you could be losing enquiries every single week without even knowing it.\n\nSo I went ahead and built you one. It's fully ready to go — complete with a contact form, mobile support, and your " + lead.reviewCount + " Google reviews pulled in.\n\nHappy to send you the preview link so you can see it for yourself?";
+  return "Hi there, hope you don't mind me reaching out — I noticed " + lead.name + " doesn't have a website and wanted to flag something.\n\nWhen someone hears about a local business these days, they almost always search online first. Google Maps shows your location and hours, but there's a limit to what you can do with just a listing — no way to showcase your work, build trust, or convert that interest into business.\n\nA simple website could change that. It doesn't need to be expensive or complicated. Even a basic site with photos, testimonials, and clear contact info typically converts way better than just a Maps listing alone.\n\nWould be worth a chat. Let me know if you're open to exploring options.\n\nCheers";
 }
 
 function buildVerdict(lead) {
@@ -521,19 +499,19 @@ function renderLeads() {
             '<div style="display:flex;align-items:center;gap:8px;"><span class="rank-num">#' + (i+1) + '</span><span class="lead-name">' + esc(lead.name) + '</span></div>' +
             '<div class="lead-type">' + esc(lead.type) + ' · ' + esc(lead.address) + '</div>' +
             '<div class="phone-row"><span class="phone-num">' + esc(lead.phone || '—') + '</span>' +
-              '<button class="btn-copy-phone" data-name="' + esc(lead.name) + '" onclick="copyPhone(this)">copy</button>' +
+              (lead.phone ? '<button class="btn-copy-phone" data-name="' + esc(lead.name) + '" onclick="copyPhone(this)">copy</button>' : '') +
             '</div>' +
             (isDone && dateStr ? '<div class="contacted-stamp">messaged ' + dateStr + '</div>' : '') +
           '</div>' +
         '</div>' +
         '<div class="badge-row">' +
           '<span class="badge badge-reviews">' + lead.reviewCount + ' reviews</span>' +
-          '<span class="badge badge-rating">' + lead.rating.toFixed(1) + ' \u2605</span>' +
+          '<span class="badge badge-rating">' + lead.rating.toFixed(1) + ' ★</span>' +
           (isDone ? '<span class="badge badge-contacted">contacted</span>' : '<span class="badge badge-noweb">no website</span>') +
         '</div>' +
       '</div>' +
-      '<div class="score-bar"><span class="score-label">opportunity</span><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div><span style="font-size:11px;font-family:\'DM Mono\',monospace;color:var(--muted);min-width:28px;">' + pct + '</span></div>' +
-      '<div class="score-bar"><span class="score-label">review volume</span><div class="bar-track"><div class="bar-fill" style="width:' + rPct + '%;background:' + bar2Color + '"></div></div><span style="font-size:11px;font-family:\'DM Mono\',monospace;color:var(--muted);min-width:28px;">' + rPct + '</span></div>' +
+      '<div class="score-bar"><span class="score-label">opportunity</span><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div><span style="font-size:11px;font-family:\'DM Mono\',monospace;color:var(--muted);min-width:28px;text-align:right;">' + pct + '%</span></div>' +
+      '<div class="score-bar"><span class="score-label">review volume</span><div class="bar-track"><div class="bar-fill" style="width:' + rPct + '%;background:' + bar2Color + '"></div></div><span style="font-size:11px;font-family:\'DM Mono\',monospace;color:var(--muted);min-width:28px;text-align:right;">' + rPct + '%</span></div>' +
       '<div class="lead-actions">' +
         '<button class="btn-msg btn-primary" onclick="toggleMsg(' + i + ')">Write outreach message</button>' +
         '<button class="btn-msg btn-secondary" onclick="toggleDetails(' + i + ')">More details</button>' +
@@ -554,7 +532,6 @@ function renderLeads() {
     '</div>';
   }).join('');
 
-  html += '<button class="btn-load-more" onclick="loadMore()">+ Find more businesses</button>';
   document.getElementById('leadsList').innerHTML = html;
 }
 
@@ -609,20 +586,6 @@ function copyPhone(btn) {
     btn.classList.add('copied');
     setTimeout(function(){ btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
   });
-}
-
-function loadMore() {
-  var trade    = document.getElementById('trade').value.trim();
-  var location = document.getElementById('location').value.trim();
-  if (!trade || !location) return;
-  var extra = generateFallback(trade, location, 6);
-  var existing = new Set(allLeads.map(function(l){ return l.name; }));
-  extra = extra.filter(function(l){ return !existing.has(l.name); });
-  if (!extra.length) { showToast('No more leads found', ''); return; }
-  allLeads = allLeads.concat(extra);
-  sortBy(currentSort, false);
-  renderLeads();
-  showToast(extra.length + ' more leads added', 'success');
 }
 
 loadContacted();
