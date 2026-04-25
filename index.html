@@ -605,8 +605,7 @@ function copyPhone(i) {
   var lead = filtered[i];
   if (!lead || !lead.phone) return;
   navigator.clipboard.writeText(lead.phone).then(function() {
-    var cards = document.querySelectorAll('.btn-copy-phone');
-    var btn = cards[i];
+    var btn = document.querySelector('#card-' + i + ' .btn-copy-phone');
     if (!btn) return;
     btn.textContent = 'copied!';
     btn.classList.add('copied');
